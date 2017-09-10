@@ -35,3 +35,7 @@ This project uses [virtualenv](http://pypi.python.org/pypi/virtualenv) to isolat
 **Makefile**
 
 Lattice comes with a Makefile which enables some useful commands. From the project root, run `make help` for a list of commands.
+
+### Packaging and Distributing
+
+See the [documentation](https://packaging.python.org/tutorials/distributing-packages/).
