@@ -4,5 +4,5 @@ venv
 .DS_Store
 build
 dist
-lattice.egg-info
-__pycache__
+*.egg-info
+lattice/__pycache__/
