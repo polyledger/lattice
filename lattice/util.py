@@ -1,5 +1,6 @@
 import dateutil.parser
 import datetime
+import time
 
 """
 DATETIME OBJECT CONVERSION HELPERS
@@ -15,7 +16,7 @@ def datetime_string_to_datetime(dtstring):
 
 def datetime_to_timestamp(dt):
     """Converts a datetime object to timestamp."""
-    return dt.timestamp()
+    return int((time.mktime(dt.timetuple()) + dt.microsecond / 1000000.0))
 
 def datetime_string_to_timestamp(dtstring):
     """Converts an ISO 8601 formatted string to timestamp."""

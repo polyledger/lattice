@@ -6,6 +6,7 @@ import requests
 import math
 import time
 import csv
+import sys
 import os
 
 class _Color:
@@ -66,7 +67,7 @@ class HistoricRatesPipeline(Pipeline):
         candles = (end - start) / self._granularity
 
         # MAX_CANDLES is the maximum candles allowed per request
-        request_count = math.ceil(candles / self.MAX_CANDLES)
+        request_count = int(math.ceil(candles / self.MAX_CANDLES))
 
         print(_Color.BLUE + 'INFO - ' + _Color.END + 'API requests required: {0}'.format(request_count))
 
@@ -103,7 +104,7 @@ class HistoricRatesPipeline(Pipeline):
 
         return partitions
 
-    def to_file(self, filename = 'output', path = '.'):
+    def to_file(self, filename = 'output', path = os.getcwd()):
         """Output historical rates to file."""
         print(_Color.BLUE + 'Requesting data from ' + _Color.CYAN + _Color.UNDERLINE + 'https://api.gdax.com' + _Color.END + _Color.BLUE + '...' + _Color.END)
 
@@ -116,17 +117,18 @@ class HistoricRatesPipeline(Pipeline):
             'granularity': self._granularity
         }
 
-        f = open(path, 'w')
+        f = open(filepath, 'w')
         f.close()
 
         for index, partition in enumerate(partitions):
-            print(_Color.BLUE + 'INFO - ' + _Color.END + 'Receiving data partition {0}/{1}'.format(index, len(partitions)) + '\r', end='\r', flush=True)
+            print(_Color.BLUE + 'INFO - ' + _Color.END + 'Receiving data partition {0}/{1}'.format(index, len(partitions)) + '\r', end='\r')
+            sys.stdout.flush()
 
             params['start'], params['end'] = partition
 
             result = _GdaxPublicClient().get_product_historic_rates(params)
 
-            with open(path, 'a') as csvfile:
+            with open(filepath, 'a') as csvfile:
                 writer = csv.writer(csvfile, delimiter = ',')
                 writer.writerows(result)
 

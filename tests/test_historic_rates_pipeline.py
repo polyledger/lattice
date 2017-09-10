@@ -46,7 +46,7 @@ class TestHistoricRatesPipeline(unittest.TestCase):
         pipeline = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01T00:00:00', '2017-01-01T01:00:00', 3600)
 
         try:
-            pipeline.to_file(filename = 'test', path = path)
+            pipeline.to_file(filename = 'test', path = tempfile.gettempdir())
             with open(path, 'rb') as f:
                 contents = f.read()
         finally:
