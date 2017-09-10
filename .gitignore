@@ -2,3 +2,6 @@
 pyvenv.cfg
 venv
 .DS_Store
+build
+dist
+lattice.egg-info
