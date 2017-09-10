@@ -39,4 +39,11 @@ Lattice comes with a Makefile which enables some useful commands. From the proje
 
 ### Packaging and Distributing
 
-See the [documentation](https://packaging.python.org/tutorials/distributing-packages/).
+Ensure `wheel` and `twine` are installed. Then inside the directory,
+
+1. `make clean-build`
+1. `python setup.py sdist`
+2. `python setup.py bdist_wheel`
+3. `twine upload dist/*`
+
+See the [Python documentation](https://packaging.python.org/tutorials/distributing-packages/) for more info.
