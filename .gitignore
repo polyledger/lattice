@@ -1,0 +1,4 @@
+*.pyc
+pyvenv.cfg
+venv
+.DS_Store
