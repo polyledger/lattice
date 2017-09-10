@@ -2,7 +2,7 @@ from setuptools import setup
 setup(
   name = 'lattice',
   packages = ['lattice'],
-  version = '0.1.dev1',
+  version = '0.1.dev3',
   description = 'A cryptocurrency market data utility package',
   author = 'Matthew Rosendin',
   author_email = 'matthew@polyledger.com',
