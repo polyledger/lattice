@@ -1,5 +1,7 @@
 # Lattice
 
+[![PyPI version](https://badge.fury.io/py/lattice.svg)](https://badge.fury.io/py/lattice)
+
 > A cryptocurrency market data utility Python package
 
 Currently, Lattice uses the Global Digital Asset Exchange (GDAX) to download historical data and execute trades, but more data sources are planned to be included.
@@ -11,8 +13,7 @@ Currently, Lattice uses the Global Digital Asset Exchange (GDAX) to download his
 ``` python
 import lattice
 
-# Create a historical data pipeline to retrieve BTC-USD prices between 2015-01-01
-# and 2017-06-1 with hourly price intervals
+# Retrieve BTC-USD prices between 2015-01-01 and 2017-06-1 with hourly price intervals
 pipeline = lattice.HistoricRatesPipeline('BTC-USD', '2015-01-01', '2017-06-01', 3600)
 
 # Output the data to `BTC_USD__2015_01_01__2017_06_01__hourly.csv`
