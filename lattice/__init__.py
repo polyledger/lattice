@@ -1,1 +1,1 @@
-from lattice.core import *
+from lattice.core import HistoricRatesPipeline
