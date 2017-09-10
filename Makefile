@@ -1,5 +1,6 @@
 clean-pyc:
 	find . -name "*.pyc" -exec rm -f {} \;
+	find . -name "lattice/__pycache__" -exec rm -rf {} \;
 
 clean-build:
 	rm -rf build/

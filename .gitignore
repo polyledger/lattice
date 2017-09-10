@@ -5,3 +5,4 @@ venv
 build
 dist
 lattice.egg-info
+__pycache__
