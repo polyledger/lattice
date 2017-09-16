@@ -13,12 +13,40 @@ Currently, Lattice uses the Global Digital Asset Exchange (GDAX) to download his
 ``` python
 import lattice
 
-# Retrieve BTC-USD prices between 2015-01-01 and 2017-06-1 with hourly price intervals
+# Configure for BTC-USD prices between 2015-01-01 and 2017-06-1 with hourly price intervals
 pipeline = lattice.HistoricRatesPipeline('BTC-USD', '2015-01-01', '2017-06-01', 3600)
 
 # Output the data to `BTC_USD__2015_01_01__2017_06_01__hourly.csv`
-pipeline.to_file("BTC_USD__2015_01_01__2017_06_01__hourly")
+pipeline.to_file('BTC_USD__2015_01_01__2017_06_01__hourly')
 ```
+
+## API Reference
+
+### lattice.HistoricRatesPipeline
+
+*class* `lattice.HistoricRatesPipeline(product, start, end, granularity)`
+
+- This class is used to retrieve historical pricing data of cryptocurrency-fiat pairs.
+
+Note: if start, end, and granularity are not specified then the most recent data is returned.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`product`|string|`'BTC-USD'`|A currency exchange pair|
+|`start`|string|none|Start time in ISO 8601, e.g. `'2017-06-01T04:15:00'`|
+|`end`|string|none|End time in ISO 8601, e.g. `'2017-07-01T04:15:00'`|
+|`granularity`|int|none|Desired timeslice in seconds|
+
+#### Methods
+
+to_file(filename, path)
+
+- Outputs market data to a CSV file. The column headers are time, low, high, open, close, volume.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`filename`|string|`'output'`|Optional. A filename for the market data|
+|`path`|string|none|Optional. The path to a directory where the output file will be saved. If unspecified, the file will be saved in the current working directory.|
 
 ## Development
 
