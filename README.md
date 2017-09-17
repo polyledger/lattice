@@ -35,7 +35,7 @@ Note: if start, end, and granularity are not specified then the most recent data
 |`product`|string|`'BTC-USD'`|A currency exchange pair|
 |`start`|string|none|Start time in ISO 8601, e.g. `'2017-06-01T04:15:00'`|
 |`end`|string|none|End time in ISO 8601, e.g. `'2017-07-01T04:15:00'`|
-|`granularity`|int|none|Desired timeslice in seconds|
+|`granularity`|int|none|Desired timeslice in seconds. Common values are `1`, `60` (minute), `3600` (hour), and `86400` (day).|
 
 #### Methods
 
