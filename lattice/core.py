@@ -67,7 +67,7 @@ class HistoricRatesPipeline(Pipeline):
         candles = (end - start) / self._granularity
 
         # MAX_CANDLES is the maximum candles allowed per request
-        request_count = int(math.ceil(candles / self.MAX_CANDLES))
+        request_count = int(math.ceil(float(candles) / float(self.MAX_CANDLES)))
 
         print(_Color.BLUE + 'INFO - ' + _Color.END + 'API requests required: {0}'.format(request_count))
 
@@ -99,7 +99,7 @@ class HistoricRatesPipeline(Pipeline):
             else:
                 end_datetime = util.date_string_to_datetime(self._end)
             start_datetime = util.timestamp_to_datetime(start_timestamp)
-            partitions.append((start_datetime, end_datetime))
+            partitions.insert(0, (start_datetime, end_datetime))
             start_timestamp += interval
 
         return partitions
