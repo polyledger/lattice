@@ -12,6 +12,13 @@ class TestHistoricRatesPipeline(unittest.TestCase):
         pipeline = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01', '2017-01-01', 3600)
 
     def test_get_request_count(self):
+
+        #==== One day ====#
+
+        granularity = 84600  # Every day
+        pipeline_0 = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01', '2017-01-02', granularity)
+        assert pipeline_0.get_request_count() == 1  # ceil(1 / 200) = 1
+
         granularity = 3600  # Every hour
         pipeline_1 = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01', '2017-01-02', granularity)
         assert pipeline_1.get_request_count() == 1  # ceil(24 / 200) = 1
@@ -23,6 +30,20 @@ class TestHistoricRatesPipeline(unittest.TestCase):
         granularity = 1  # Every second
         pipeline_3 = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01', '2017-01-02', granularity)
         assert pipeline_3.get_request_count() == 432 # ceil((24 * 60 * 60) / 200) = 432
+
+        #==== 15 days ====#
+
+        granularity = 3600  # Every hour
+        pipeline_4 = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01', '2017-01-16', granularity)
+        assert pipeline_4.get_request_count() == 2  # ceil(24 * 15 / 200) = 2
+
+        granularity = 60  # Every minute
+        pipeline_5 = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01', '2017-01-16', granularity)
+        assert pipeline_5.get_request_count() == 108 # ceil((24 * 60 * 15) / 200) = 108
+
+        granularity = 1  # Every second
+        pipeline_6 = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01', '2017-01-16', granularity)
+        assert pipeline_6.get_request_count() == 6480 # ceil((24 * 60 * 60 * 15) / 200) = 6480
 
     def test_partition_request(self):
         pipeline_1 = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01', '2017-01-02', 3600)
