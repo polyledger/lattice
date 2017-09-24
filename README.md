@@ -4,7 +4,7 @@
 
 > A cryptocurrency market data utility Python package
 
-Currently, Lattice uses the Global Digital Asset Exchange (GDAX) to download historical data and execute trades, but more data sources are planned to be included.
+Currently, Lattice uses the Global Digital Asset Exchange (GDAX) to download historical data and execute trades, but more data sources are planned to be included. Lattice also includes a virtual market environment for backtesting trading algorithms.
 
 ## Usage
 
@@ -47,6 +47,10 @@ to_file(filename, path)
 |---------|----|-------|-----------|
 |`filename`|string|`'output'`|Optional. A filename for the market data|
 |`path`|string|none|Optional. The path to a directory where the output file will be saved. If unspecified, the file will be saved in the current working directory.|
+
+to_list()
+
+- Outputs market data to an in-memory list. The column headers are time, low, high, open, close, volume. Use this method at your own risk.
 
 ## Development
 

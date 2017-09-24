@@ -126,11 +126,40 @@ class HistoricRatesPipeline(Pipeline):
 
             params['start'], params['end'] = partition
 
-            result = _GdaxPublicClient().get_product_historic_rates(params)
+            batch = _GdaxPublicClient().get_product_historic_rates(params)
 
             with open(filepath, 'a') as csvfile:
                 writer = csv.writer(csvfile, delimiter = ',')
-                writer.writerows(result)
+                writer.writerows(batch)
 
         print(_Color.BLUE + 'INFO - ' + _Color.END + 'Receiving data partition {0}/{0}'.format(len(partitions)))
         print(_Color.GREEN + 'SUCCESS - ' + _Color.END + 'Write to {0}.csv complete.'.format(filename))
+
+    def to_list(self):
+        """Returns historical rates as a list."""
+        print(_Color.YELLOW + 'WARNING - ' + _Color.END + 'This holds all data in memory. I sure hope you know what you are doing.')
+        print(_Color.BLUE + 'Requesting data from ' + _Color.CYAN + _Color.UNDERLINE + 'https://api.gdax.com' + _Color.END + _Color.BLUE + '...' + _Color.END)
+
+        result = []
+        partitions = self.partition_request()
+        params = {
+            'product': self._product,
+            'start': self._start,
+            'end': self._end,
+            'granularity': self._granularity
+        }
+
+        for index, partition in enumerate(partitions):
+            print(_Color.BLUE + 'INFO - ' + _Color.END + 'Receiving data partition {0}/{1}'.format(index, len(partitions)) + '\r', end='\r')
+            sys.stdout.flush()
+
+            params['start'], params['end'] = partition
+
+            batch = _GdaxPublicClient().get_product_historic_rates(params)
+
+            result.extend(batch)
+
+        print(_Color.BLUE + 'INFO - ' + _Color.END + 'Receiving data partition {0}/{0}'.format(len(partitions)))
+        print(_Color.GREEN + 'SUCCESS - ' + _Color.END + 'In-memory list created.')
+
+        return result

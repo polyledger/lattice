@@ -63,17 +63,23 @@ class TestHistoricRatesPipeline(unittest.TestCase):
         assert len(partitions) == 432
 
     def test_to_file(self):
-        path = tempfile.mkstemp()[1]
         pipeline = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01T00:00:00', '2017-01-01T01:00:00', 3600)
+        file_path = tempfile.gettempdir() + '/test.csv'
 
         try:
             pipeline.to_file(filename = 'test', path = tempfile.gettempdir())
-            with open(path, 'rb') as f:
+            with open(file_path, 'rb') as f:
                 contents = f.read()
         finally:
-            os.remove(path)
+            os.remove(file_path)
 
         self.assertEqual(contents, b'1483228800,969.9,973.4,973.37,970.27,184.70460239999997\r\n')
+
+    def test_to_list(self):
+        pipeline = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01T00:00:00', '2017-01-01T01:00:00', 3600)
+        test_list = pipeline.to_list()
+        self.assertIsInstance(test_list, list)
+        self.assertEqual(test_list, [[1483228800,969.9,973.4,973.37,970.27,184.70460239999997]])
 
 if __name__ == '__main__':
     unittest.main()
