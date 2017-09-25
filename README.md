@@ -36,6 +36,7 @@ Note: if start, end, and granularity are not specified then the most recent data
 |`start`|string|none|Start time in ISO 8601, e.g. `'2017-06-01T04:15:00'`|
 |`end`|string|none|End time in ISO 8601, e.g. `'2017-07-01T04:15:00'`|
 |`granularity`|int|none|Desired timeslice in seconds. Common values are `1`, `60` (minute), `3600` (hour), and `86400` (day).|
+|`silent`|boolean|False|Silence console messages|
 
 #### Methods
 
@@ -51,6 +52,51 @@ to_file(filename, path)
 to_list()
 
 - Outputs market data to an in-memory list. The column headers are time, low, high, open, close, volume. Use this method at your own risk.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`silent`|boolean|False|Silence console messages|
+
+### lattice.Portfolio
+
+*class* `lattice.Portfolio(assets, initial_funds)`
+
+- This class is used to represent a portfolio whose value can be determined for different datetimes, which is particularly useful for backtesting and/or predictive modeling.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`assets`|dict|`{}`|A dictionary of currency/amount key-value pairs, e.g. `{'ETH': 50}`|
+|`initial_funds`|tuple|`('USD', 0)`|A tuple containing the initial investment|
+
+#### Methods
+
+add_asset(asset, amount, datetime)
+
+- Adds a specified amount of an asset to the portfolio at the given datetime.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`asset`|string|`'USD'`|An asset name. Current acceptable values are `BTC`, `ETH`, `LTC`, and `USD`.|
+|`amount`|float|`0`|The amount of the asset to add to the portfolio|
+|`datetime`|string|Resolves to the current datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`. Useful for backtesting|
+
+get_value(datetime)
+
+- Gets the value of the portfolio at the specified datetime.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`datetime`|string|Resolves to the current datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`. Useful for backtesting|
+
+remove_asset(asset, amount, datetime)
+
+- Removes a specified amount of an asset to the portfolio at the given datetime.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`asset`|string|`'USD'`|An asset name. Current acceptable values are `BTC`, `ETH`, `LTC`, and `USD`.|
+|`amount`|float|`0`|The amount of the asset to remove from the portfolio|
+|`datetime`|string|Resolves to the current datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`. Useful for backtesting|
 
 ## Development
 

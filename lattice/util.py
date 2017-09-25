@@ -6,6 +6,10 @@ import time
 DATETIME OBJECT CONVERSION HELPERS
 """
 
+def current_datetime_string():
+    """Returns a current datetime string"""
+    return str(datetime.datetime.now())
+
 def date_string_to_datetime(dstring):
     """Converts a date to a datetime object"""
     return timestamp_to_datetime(datetime_string_to_timestamp(dstring))
