@@ -178,7 +178,7 @@ class Portfolio(object):
 
     def __init__(self, assets = {}, initial_funds = ('USD', 0)):
         self.assets = assets
-        self.created_at = time.time()
+        self.created_at = util.current_datetime_string()
         self.history = []
         self.initial_funds = initial_funds
 
@@ -229,4 +229,4 @@ class Portfolio(object):
         if self.assets[asset] < amount:
             raise ValueError('Removal of {0} requested but only {1} exists in portfolio.'.format(amount, self.assets[asset]))
         self.assets[asset] -= amount
-        self.history.append({ 'timestamp': time.time(), 'asset': asset, 'amount': -amount})
+        self.history.append({ 'datetime': datetime, 'asset': asset, 'amount': -amount})
