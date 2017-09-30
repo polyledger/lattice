@@ -20,7 +20,39 @@ pipeline = lattice.HistoricRatesPipeline('BTC-USD', '2015-01-01', '2017-06-01', 
 pipeline.to_file('BTC_USD__2015_01_01__2017_06_01__hourly')
 ```
 
+**Backtesting trading strategies**
+
+``` python
+import lattice
+
+# Create an empty portfolio
+portfolio = lattice.Portfolio()
+
+# Add some assets
+portfolio.add_asset('USD', 500)  # Added at current time
+portfolio.add_asset('BTC', 100)
+portfolio.add_asset('BTC', 20, '2016-01-01')  # Adds BTC to portfolio in the past
+
+# Get the current value
+portfolio.get_value()  # Returns today's value of portfolio with 500 USD and 120 BTC
+portfolio.get_value('2016-01-01')  # Returns value of portfolio with 20 BTC at given date
+
+# Remove some assets
+portfolio.remove_asset('USD', 50)  # Removed at current time
+
+# View the current portfolio
+portfolio.assets
+# => { 'USD': 450, 'BTC': 120 }
+
+# View the portfolio's history
+portfolio.history
+# => [{'amount': 500, 'asset': 'USD', 'datetime': '2017-09-24 18:57:30.665223'}, {'amount': 100, 'asset': 'BTC', 'datetime': '2017-09-24 18:57:30.665223'}, {'amount': 20, 'asset': 'BTC', 'datetime': '2016-01-01'}, {'amount': -50, 'asset': 'USD', 'datetime': '2017-09-24 18:57:30.665241'}]
+```
+
 ## API Reference
+
+- [lattice.HistoricRatesPipeline](#latticehistoricratespipeline)
+- [lattice.Portfolio](#latticeportfolio)
 
 ### lattice.HistoricRatesPipeline
 
