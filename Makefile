@@ -10,6 +10,9 @@ clean-build:
 init:
 	pip install -r requirements.txt
 
+lint:
+	pylint --rcfile=.pylintrc .
+
 test: clean-pyc
 	python3 -m unittest discover --verbose --start-directory tests -b
 
@@ -22,5 +25,7 @@ help:
 	@echo "    Remove build artifacts."
 	@echo "init"
 	@echo "    Install module dependencies."
+	@echo "lint"
+	@echo "    Lint project files with Pyflakes."
 	@echo "test"
 	@echo "    Run test suite."
