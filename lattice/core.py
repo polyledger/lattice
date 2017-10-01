@@ -35,6 +35,11 @@ class _GdaxPublicClient(object):
 
         r = requests.get("{0._url}/products/{1}/candles".format(self, product), params=params, timeout=30)
 
+        if not r.json():
+            # TODO: Research why GDAX is inconsistent here.
+            raise Exception('GDAX did not return any data.')
+            # raise ValueError('No data found for date range {0} - {1}'.format(params['start'], params['end']))
+
         while (r.status_code == 429):
             # Rate limit exceeded. Wait a second and try again.
             time.sleep(1)
@@ -176,14 +181,15 @@ class HistoricRatesPipeline(Pipeline):
 
 class Portfolio(object):
 
-    def __init__(self, assets = {}, initial_funds = ('USD', 0)):
+    def __init__(self, assets = {}):
         self.assets = assets
         self.created_at = util.current_datetime_string()
         self.history = []
-        self.initial_funds = initial_funds
 
     def add_asset(self, asset = 'USD', amount = 0, datetime = util.current_datetime_string()):
         """Adds the given amount of an asset to this portfolio."""
+        if amount < 0:
+            raise ValueError('Asset amount must be greater than zero. Given amount: {}'.format(amount))
         if asset not in self.assets:
             self.assets[asset] = amount
         else:
@@ -196,7 +202,7 @@ class Portfolio(object):
         # To ensure a single price is returned, we set set a one minute timeframe
         # and a granularity of 60
         start = datetime
-        end = str(util.timestamp_to_datetime(util.datetime_string_to_timestamp(datetime) + 60))
+        end = str(util.timestamp_to_datetime(util.datetime_string_to_timestamp(datetime) + 3600))
         granularity = 60
         pipeline = HistoricRatesPipeline(product, start, end, granularity)
         return pipeline.to_list(silent = True)[0][4]
@@ -206,10 +212,13 @@ class Portfolio(object):
         value = 0
 
         # Backdate the portfolio by changing its values temporarily
-        backdated_assets = self.assets
+        backdated_assets = self.assets.copy()
         for trade in self.history:
             if trade['datetime'] > datetime:
                 backdated_assets[trade['asset']] -= trade['amount']
+
+                if backdated_assets[trade['asset']] == 0:
+                    del backdated_assets[trade['asset']]
 
         for asset in backdated_assets:
             amount = backdated_assets[asset]
@@ -226,7 +235,13 @@ class Portfolio(object):
 
     def remove_asset(self, asset = 'USD', amount=0, datetime = util.current_datetime_string()):
         """Removes the given amount of an asset to this portfolio."""
+        if amount < 0:
+            raise ValueError('Asset amount must be greater than zero. Given amount: {}'.format(amount))
         if self.assets[asset] < amount:
             raise ValueError('Removal of {0} requested but only {1} exists in portfolio.'.format(amount, self.assets[asset]))
         self.assets[asset] -= amount
         self.history.append({ 'datetime': datetime, 'asset': asset, 'amount': -amount})
+
+    def trade_asset(self):
+        """Exchanges one asset for another. If it's a backdated trade, the historical exchange rate is used."""
+        pass
