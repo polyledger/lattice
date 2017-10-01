@@ -196,16 +196,23 @@ class Portfolio(object):
             self.assets[asset] += amount
         self.history.append({ 'datetime': datetime, 'asset': asset, 'amount': +amount})
 
-    def __get_price(self, asset, datetime):
+    def __get_price(self, asset, unit = 'USD', datetime = util.current_datetime_string()):
         """Gets the price of a given asset at a given time."""
-        product = '{0}-USD'.format(asset)
+        SUPPORTED_UNITS = ['USD', 'BTC', 'ETH', 'LTC']
+
+        if unit not in SUPPORTED_UNITS:
+            raise ValueError('Received an unsupported unit \'{0}\'. Must be one of {1}'.format(unit, ', '.join(SUPPORTED_UNITS)))
+
+        product = '{0}-{1}'.format(asset, unit) if unit == 'USD' else '{1}-{0}'.format(asset, unit)
         # To ensure a single price is returned, we set set a one minute timeframe
         # and a granularity of 60
         start = datetime
-        end = str(util.timestamp_to_datetime(util.datetime_string_to_timestamp(datetime) + 3600))
+        end = str(util.timestamp_to_datetime(util.datetime_string_to_timestamp(datetime) + 60))
         granularity = 60
         pipeline = HistoricRatesPipeline(product, start, end, granularity)
-        return pipeline.to_list(silent = True)[0][4]
+        rate = pipeline.to_list(silent = True)[0][4]
+
+        return 1/rate if asset == 'USD' else rate
 
     def get_value(self, datetime = util.current_datetime_string()):
         """Get the value of the portfolio at a given time."""
@@ -223,7 +230,7 @@ class Portfolio(object):
         for asset in backdated_assets:
             amount = backdated_assets[asset]
             if asset is not 'USD':
-                value += self.__get_price(asset, datetime) * amount
+                value += self.__get_price(asset, unit='USD', datetime=datetime) * amount
             else:
                 value += amount
         return value
@@ -233,7 +240,7 @@ class Portfolio(object):
         # TODO: Use matplotlib for this.
         pass
 
-    def remove_asset(self, asset = 'USD', amount=0, datetime = util.current_datetime_string()):
+    def remove_asset(self, asset = 'USD', amount = 0, datetime = util.current_datetime_string()):
         """Removes the given amount of an asset to this portfolio."""
         if amount < 0:
             raise ValueError('Asset amount must be greater than zero. Given amount: {}'.format(amount))
@@ -242,6 +249,10 @@ class Portfolio(object):
         self.assets[asset] -= amount
         self.history.append({ 'datetime': datetime, 'asset': asset, 'amount': -amount})
 
-    def trade_asset(self):
+    def trade_asset(self, amount, from_asset, to_asset, datetime = util.current_datetime_string()):
         """Exchanges one asset for another. If it's a backdated trade, the historical exchange rate is used."""
-        pass
+        price = self.__get_price(from_asset, unit=to_asset, datetime=datetime)
+        self.remove_asset(from_asset, amount, datetime)
+        self.history.append({ 'datetime': datetime, 'asset': from_asset, 'amount': -amount })
+        self.add_asset(to_asset, amount * price, datetime)
+        self.history.append({ 'datetime': datetime, 'asset': to_asset, 'amount': amount })

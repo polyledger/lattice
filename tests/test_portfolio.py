@@ -31,11 +31,11 @@ class TestPortfolio(unittest.TestCase):
 
         # The prices at the given dates are accurate.
         portfolio_2.add_asset('BTC', 50, '2017-01-01')
-        self.assertEqual(portfolio_2.get_value('2017-01-01'), 58513.5)
+        self.assertEqual(portfolio_2.get_value('2017-01-01'), 58667.5)
         portfolio_2.add_asset('ETH', 50, '2017-01-01')
-        self.assertEqual(portfolio_2.get_value('2017-01-01'), 58927.0)
+        self.assertEqual(portfolio_2.get_value('2017-01-01'), 59075.5)
         portfolio_2.add_asset('LTC', 50, '2017-05-01')
-        self.assertEqual(portfolio_2.get_value('2017-05-01'), 84041.0)
+        self.assertEqual(portfolio_2.get_value('2017-05-01'), 84047.5)
 
         # Ensure that the value before adding BTC, ETH, and LTC is the original 10000 USD
         self.assertEqual(portfolio_2.get_value('2016-01-01'), 10000)
@@ -51,6 +51,12 @@ class TestPortfolio(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             portfolio_3.remove_asset('USD', -1000)
+
+    def test_trade_asset(self):
+        portfolio_4 = lattice.Portfolio({ 'USD': 10000 })
+        portfolio_4.trade_asset(1000, 'USD', 'BTC')
+        self.assertEqual(portfolio_4.assets['USD'], 9000)
+        self.assertTrue(portfolio_4.assets['BTC'] > 0)
 
 if __name__ == '__main__':
     unittest.main()
