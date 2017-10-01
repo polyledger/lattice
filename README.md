@@ -120,6 +120,17 @@ get_value(datetime)
 |---------|----|-------|-----------|
 |`datetime`|string|Resolves to the current datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`. Useful for backtesting|
 
+trade_asset(amount, from_asset, to_asset, datetime)
+
+- Exchanges one asset for another at the given datetime.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`amount`|float|`0`|The amount of `from_asset` to exchange|
+|`from_asset`|string|None|Required. The traded asset, e.g. `USD`, `BTC`, `ETH`, `LTC`|
+|`to_asset`|string|None|Required. The received asset, e.g. `USD`, `BTC`, `ETH`, `LTC`|
+|`datetime`|string|Resolves to the current datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`. Useful for backtesting|
+
 remove_asset(asset, amount, datetime)
 
 - Removes a specified amount of an asset to the portfolio at the given datetime.
