@@ -36,9 +36,9 @@ class _GdaxPublicClient(object):
         r = requests.get("{0._url}/products/{1}/candles".format(self, product), params=params, timeout=30)
 
         if not r.json():
-            # TODO: Research why GDAX is inconsistent here.
-            raise Exception('GDAX did not return any data.')
-            # raise ValueError('No data found for date range {0} - {1}'.format(params['start'], params['end']))
+            # TODO: Research why GDAX is inconsistent here. In the meantime, try the request again.
+            r = requests.get("{0._url}/products/{1}/candles".format(self, product), params=params, timeout=30)
+            # raise Exception('GDAX did not return any data.')
 
         while (r.status_code == 429):
             # Rate limit exceeded. Wait a second and try again.
