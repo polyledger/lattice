@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-from lattice import util
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import pandas as pd
-import requests
 import math
 import time
 import csv
 import sys
 import os
+import matplotlib.pyplot as plt
+import pandas as pd
+import requests
+from lattice import util
 
 class _Color:
     PURPLE = '\033[95m'
@@ -35,23 +34,23 @@ class _GdaxPublicClient(object):
         params = dict(params)  # Make a local copy of params
         del params['product']
 
-        r = requests.get("{0._url}/products/{1}/candles".format(self, product),
-                         params=params, timeout=30)
+        res = requests.get("{0._url}/products/{1}/candles".format(self, product),
+                           params=params, timeout=30)
 
-        if not r.json():
+        if not res.json():
             # Research why GDAX is inconsistent here. In the meantime, try the request again.
             # One possibility is that the user entered a bad date range, in which case can raise:
             # raise Exception('GDAX did not return any data.')
-            r = requests.get("{0._url}/products/{1}/candles".format(self, product),
-                             params=params, timeout=30)
+            res = requests.get("{0._url}/products/{1}/candles".format(self, product),
+                               params=params, timeout=30)
 
-        while r.status_code == 429:
+        while res.status_code == 429:
             # Rate limit exceeded. Wait a second and try again.
             time.sleep(1)
-            r = requests.get("{0._url}/products/{1}/candles".format(self, product),
-                             params=params, timeout=30)
+            res = requests.get("{0._url}/products/{1}/candles".format(self, product),
+                               params=params, timeout=30)
 
-        return r.json()
+        return res.json()
 
 class Pipeline(object):
 
@@ -132,8 +131,8 @@ class HistoricRatesPipeline(Pipeline):
             'granularity': self._granularity
         }
 
-        f = open(filepath, 'w')
-        f.close()
+        newfile = open(filepath, 'w')
+        newfile.close()
 
         for index, partition in enumerate(partitions):
             if not silent:
@@ -204,10 +203,10 @@ class Portfolio(object):
 
     def __get_price(self, asset, unit='USD', datetime=util.current_datetime_string()):
         """Gets the price of a given asset at a given time."""
-        SUPPORTED_UNITS = ['USD', 'BTC', 'ETH', 'LTC']
+        supported_units = ['USD', 'BTC', 'ETH', 'LTC']
 
-        if unit not in SUPPORTED_UNITS:
-            raise ValueError('Received an unsupported unit \'{0}\'. Must be one of {1}'.format(unit, ', '.join(SUPPORTED_UNITS)))
+        if unit not in supported_units:
+            raise ValueError('Received an unsupported unit \'{0}\'. Must be one of {1}'.format(unit, ', '.join(supported_units)))
 
         product = '{0}-{1}'.format(asset, unit) if unit == 'USD' else '{1}-{0}'.format(asset, unit)
         # To ensure a single price is returned, we set set a one minute timeframe
@@ -235,7 +234,7 @@ class Portfolio(object):
 
         for asset in backdated_assets:
             amount = backdated_assets[asset]
-            if asset is not 'USD':
+            if asset != 'USD':
                 value += self.__get_price(asset, unit='USD', datetime=datetime) * amount
             else:
                 value += amount
@@ -246,7 +245,7 @@ class Portfolio(object):
         daily_data = {}
 
         for asset in self.assets:
-            if asset is not 'USD':
+            if asset != 'USD':
                 if not silent:
                     print(_Color.BLUE + 'INFO - ' + _Color.END + 'Getting historical {0} data...'.format(asset))
                 pipeline = HistoricRatesPipeline('{0}-USD'.format(asset), start_datetime, end_datetime)
@@ -262,9 +261,9 @@ class Portfolio(object):
             values.append(self.get_value(str(date.date())))
 
         time_series = pd.DataFrame({'date': date_range, 'values': values})
-        ax = time_series.plot()
-        ax.set_xlabel('Date')
-        ax.set_ylabel('Value ($)')
+        axes = time_series.plot()
+        axes.set_xlabel('Date')
+        axes.set_ylabel('Value ($)')
         plt.show()
 
     def remove_asset(self, asset='USD', amount=0, datetime=util.current_datetime_string()):

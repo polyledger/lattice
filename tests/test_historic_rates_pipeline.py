@@ -1,7 +1,7 @@
+import os
 import unittest
 import tempfile
 import lattice
-import os
 
 class TestHistoricRatesPipeline(unittest.TestCase):
 
