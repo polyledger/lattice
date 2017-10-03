@@ -4,7 +4,7 @@ import lattice
 class TestPortfolio(unittest.TestCase):
 
     def test_constructor(self):
-        initial_assets = { 'USD': 10000 }
+        initial_assets = {'USD': 10000}
         portfolio = lattice.Portfolio()
         portfolio_0 = lattice.Portfolio(initial_assets)
 
@@ -26,7 +26,7 @@ class TestPortfolio(unittest.TestCase):
             portfolio_1.add_asset('USD', -10000)
 
     def test_get_value(self):
-        portfolio_2 = lattice.Portfolio({ 'USD': 10000 })
+        portfolio_2 = lattice.Portfolio({'USD': 10000})
         self.assertEqual(portfolio_2.get_value(), 10000)
 
         # The prices at the given dates are accurate.
@@ -41,7 +41,7 @@ class TestPortfolio(unittest.TestCase):
         self.assertEqual(portfolio_2.get_value('2016-01-01'), 10000)
 
     def test_remove_asset(self):
-        portfolio_3 = lattice.Portfolio({ 'USD': 10000 })
+        portfolio_3 = lattice.Portfolio({'USD': 10000})
         portfolio_3.remove_asset('USD', 1000)
 
         self.assertEqual(portfolio_3.assets['USD'], 9000)
@@ -53,7 +53,7 @@ class TestPortfolio(unittest.TestCase):
             portfolio_3.remove_asset('USD', -1000)
 
     def test_trade_asset(self):
-        portfolio_4 = lattice.Portfolio({ 'USD': 10000 })
+        portfolio_4 = lattice.Portfolio({'USD': 10000})
         portfolio_4.trade_asset(1000, 'USD', 'BTC')
         self.assertEqual(portfolio_4.assets['USD'], 9000)
         self.assertTrue(portfolio_4.assets['BTC'] > 0)

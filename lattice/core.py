@@ -2,7 +2,9 @@
 
 from __future__ import print_function
 from lattice import util
-import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import pandas as pd
 import requests
 import math
 import time
@@ -11,20 +13,20 @@ import sys
 import os
 
 class _Color:
-   PURPLE = '\033[95m'
-   CYAN = '\033[96m'
-   DARKCYAN = '\033[36m'
-   BLUE = '\033[94m'
-   GREEN = '\033[92m'
-   YELLOW = '\033[93m'
-   RED = '\033[91m'
-   BOLD = '\033[1m'
-   UNDERLINE = '\033[4m'
-   END = '\033[0m'
+    PURPLE = '\033[95m'
+    CYAN = '\033[96m'
+    DARKCYAN = '\033[36m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'
 
 class _GdaxPublicClient(object):
 
-    def __init__(self, url = 'https://api.gdax.com'):
+    def __init__(self, url='https://api.gdax.com'):
         self._url = url
 
     def get_product_historic_rates(self, params):
@@ -33,17 +35,21 @@ class _GdaxPublicClient(object):
         params = dict(params)  # Make a local copy of params
         del params['product']
 
-        r = requests.get("{0._url}/products/{1}/candles".format(self, product), params=params, timeout=30)
+        r = requests.get("{0._url}/products/{1}/candles".format(self, product),
+                         params=params, timeout=30)
 
         if not r.json():
-            # TODO: Research why GDAX is inconsistent here. In the meantime, try the request again.
-            r = requests.get("{0._url}/products/{1}/candles".format(self, product), params=params, timeout=30)
+            # Research why GDAX is inconsistent here. In the meantime, try the request again.
+            # One possibility is that the user entered a bad date range, in which case can raise:
             # raise Exception('GDAX did not return any data.')
+            r = requests.get("{0._url}/products/{1}/candles".format(self, product),
+                             params=params, timeout=30)
 
-        while (r.status_code == 429):
+        while r.status_code == 429:
             # Rate limit exceeded. Wait a second and try again.
             time.sleep(1)
-            r = requests.get("{0._url}/products/{1}/candles".format(self, product), params=params, timeout=30)
+            r = requests.get("{0._url}/products/{1}/candles".format(self, product),
+                             params=params, timeout=30)
 
         return r.json()
 
@@ -56,14 +62,14 @@ class HistoricRatesPipeline(Pipeline):
 
     MAX_CANDLES = 200
 
-    def __init__(self, product, start, end, granularity):
+    def __init__(self, product, start, end=util.current_datetime_string(), granularity=86400):
         Pipeline.__init__(self)
         self._product = product
         self._start = start
         self._end = end
         self._granularity = granularity
 
-    def get_request_count(self, silent = False):
+    def get_request_count(self, silent=False):
         """Check how many API calls need to be made."""
         # Convert start and end to timestamp integer
         start = util.datetime_string_to_timestamp(self._start)
@@ -80,14 +86,14 @@ class HistoricRatesPipeline(Pipeline):
 
         return request_count
 
-    def partition_request(self, silent = False):
+    def partition_request(self, silent=False):
         """Returns a list of (start, end) datetime tuples.
 
         Requests have to be partitioned into smaller chunks that result in less
         than MAX_CANDLES response length. Longer date ranges and smaller
         granularities will increase the number of partitions.
         """
-        request_count = self.get_request_count(silent = silent)
+        request_count = self.get_request_count(silent=silent)
 
         # Convert start and end to timestamp integer
         start_timestamp = util.datetime_string_to_timestamp(self._start)
@@ -112,13 +118,13 @@ class HistoricRatesPipeline(Pipeline):
 
         return partitions
 
-    def to_file(self, filename = 'output', path = os.getcwd(), silent = False):
+    def to_file(self, filename='output', path=os.getcwd(), silent=False):
         """Output historical rates to file."""
         if not silent:
             print(_Color.BLUE + 'Requesting data from ' + _Color.CYAN + _Color.UNDERLINE + 'https://api.gdax.com' + _Color.END + _Color.BLUE + '...' + _Color.END)
 
         filepath = os.path.join(path, '{0}.csv'.format(filename))
-        partitions = self.partition_request(silent = silent)
+        partitions = self.partition_request(silent=silent)
         params = {
             'product': self._product,
             'start': self._start,
@@ -139,21 +145,21 @@ class HistoricRatesPipeline(Pipeline):
             batch = _GdaxPublicClient().get_product_historic_rates(params)
 
             with open(filepath, 'a') as csvfile:
-                writer = csv.writer(csvfile, delimiter = ',')
+                writer = csv.writer(csvfile, delimiter=',')
                 writer.writerows(batch)
 
         if not silent:
             print(_Color.BLUE + 'INFO - ' + _Color.END + 'Receiving data partition {0}/{0}'.format(len(partitions)))
             print(_Color.GREEN + 'SUCCESS - ' + _Color.END + 'Write to {0}.csv complete.'.format(filename))
 
-    def to_list(self, silent = False):
+    def to_list(self, silent=False):
         """Returns historical rates as a list."""
         if not silent:
             print(_Color.YELLOW + 'WARNING - ' + _Color.END + 'This holds all data in memory. I sure hope you know what you are doing.')
             print(_Color.BLUE + 'Requesting data from ' + _Color.CYAN + _Color.UNDERLINE + 'https://api.gdax.com' + _Color.END + _Color.BLUE + '...' + _Color.END)
 
         result = []
-        partitions = self.partition_request(silent = silent)
+        partitions = self.partition_request(silent=silent)
         params = {
             'product': self._product,
             'start': self._start,
@@ -181,12 +187,12 @@ class HistoricRatesPipeline(Pipeline):
 
 class Portfolio(object):
 
-    def __init__(self, assets = {}):
+    def __init__(self, assets={}):
         self.assets = assets
         self.created_at = util.current_datetime_string()
         self.history = []
 
-    def add_asset(self, asset = 'USD', amount = 0, datetime = util.current_datetime_string()):
+    def add_asset(self, asset='USD', amount=0, datetime=util.current_datetime_string()):
         """Adds the given amount of an asset to this portfolio."""
         if amount < 0:
             raise ValueError('Asset amount must be greater than zero. Given amount: {}'.format(amount))
@@ -194,9 +200,9 @@ class Portfolio(object):
             self.assets[asset] = amount
         else:
             self.assets[asset] += amount
-        self.history.append({ 'datetime': datetime, 'asset': asset, 'amount': +amount})
+        self.history.append({'datetime': datetime, 'asset': asset, 'amount': +amount})
 
-    def __get_price(self, asset, unit = 'USD', datetime = util.current_datetime_string()):
+    def __get_price(self, asset, unit='USD', datetime=util.current_datetime_string()):
         """Gets the price of a given asset at a given time."""
         SUPPORTED_UNITS = ['USD', 'BTC', 'ETH', 'LTC']
 
@@ -210,11 +216,11 @@ class Portfolio(object):
         end = str(util.timestamp_to_datetime(util.datetime_string_to_timestamp(datetime) + 60))
         granularity = 60
         pipeline = HistoricRatesPipeline(product, start, end, granularity)
-        rate = pipeline.to_list(silent = True)[0][4]
+        rate = pipeline.to_list(silent=True)[0][4]
 
         return 1/rate if asset == 'USD' else rate
 
-    def get_value(self, datetime = util.current_datetime_string()):
+    def get_value(self, datetime=util.current_datetime_string()):
         """Get the value of the portfolio at a given time."""
         value = 0
 
@@ -235,24 +241,50 @@ class Portfolio(object):
                 value += amount
         return value
 
-    def historical_value_chart(self, start_datetime, end_datetime):
+    def historical_value_chart(self, start_datetime, end_datetime=util.current_datetime_string(), silent=False):
         """Display a chart of this portfolios value during the specified timeframe."""
-        # TODO: Use matplotlib for this.
-        pass
+        daily_data = {}
 
-    def remove_asset(self, asset = 'USD', amount = 0, datetime = util.current_datetime_string()):
+        for asset in self.assets:
+            if asset is not 'USD':
+                if not silent:
+                    print(_Color.BLUE + 'INFO - ' + _Color.END + 'Getting historical {0} data...'.format(asset))
+                pipeline = HistoricRatesPipeline('{0}-USD'.format(asset), start_datetime, end_datetime)
+                daily_data[asset] = pipeline.to_list(silent=True)
+
+        if not silent:
+            print(_Color.BLUE + 'INFO - ' + _Color.END + 'Generating plot...')
+
+        date_range = pd.date_range(start_datetime, end_datetime, freq='D')
+        values = []
+
+        for date in date_range:
+            values.append(self.get_value(str(date.date())))
+
+        time_series = pd.DataFrame({'date': date_range, 'values': values})
+        ax = time_series.plot()
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Value ($)')
+        plt.show()
+
+    def remove_asset(self, asset='USD', amount=0, datetime=util.current_datetime_string()):
         """Removes the given amount of an asset to this portfolio."""
         if amount < 0:
             raise ValueError('Asset amount must be greater than zero. Given amount: {}'.format(amount))
         if self.assets[asset] < amount:
             raise ValueError('Removal of {0} requested but only {1} exists in portfolio.'.format(amount, self.assets[asset]))
         self.assets[asset] -= amount
-        self.history.append({ 'datetime': datetime, 'asset': asset, 'amount': -amount})
+        self.history.append({'datetime': datetime, 'asset': asset, 'amount': -amount})
 
-    def trade_asset(self, amount, from_asset, to_asset, datetime = util.current_datetime_string()):
+    def trade_asset(self, amount, from_asset, to_asset, datetime=util.current_datetime_string()):
         """Exchanges one asset for another. If it's a backdated trade, the historical exchange rate is used."""
         price = self.__get_price(from_asset, unit=to_asset, datetime=datetime)
         self.remove_asset(from_asset, amount, datetime)
-        self.history.append({ 'datetime': datetime, 'asset': from_asset, 'amount': -amount })
+        self.history.append({'datetime': datetime, 'asset': from_asset, 'amount': -amount})
         self.add_asset(to_asset, amount * price, datetime)
-        self.history.append({ 'datetime': datetime, 'asset': to_asset, 'amount': amount })
+        self.history.append({'datetime': datetime, 'asset': to_asset, 'amount': amount})
+
+class TradingStrategy(object):
+
+    def __init__(self):
+        pass

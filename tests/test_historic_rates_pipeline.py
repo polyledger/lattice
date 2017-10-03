@@ -47,18 +47,18 @@ class TestHistoricRatesPipeline(unittest.TestCase):
 
     def test_partition_request(self):
         pipeline_1 = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01', '2017-01-02', 3600)
-        partitions = pipeline_1.partition_request(silent = True)
+        partitions = pipeline_1.partition_request(silent=True)
         self.assertIsInstance(partitions, list)
         self.assertEqual(len(partitions), 1)
         self.assertEqual(partitions, [('2017-01-01T00:00:00', '2017-01-02T00:00:00')])
 
         pipeline_2 = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01', '2017-01-02', 60)
-        partitions = pipeline_2.partition_request(silent = True)
+        partitions = pipeline_2.partition_request(silent=True)
         self.assertIsInstance(partitions, list)
         self.assertEqual(len(partitions), 8)
 
         pipeline_3 = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01', '2017-01-02', 1)
-        partitions = pipeline_3.partition_request(silent = True)
+        partitions = pipeline_3.partition_request(silent=True)
         self.assertIsInstance(partitions, list)
         self.assertEqual(len(partitions), 432)
 
@@ -67,7 +67,7 @@ class TestHistoricRatesPipeline(unittest.TestCase):
         file_path = tempfile.gettempdir() + '/test.csv'
 
         try:
-            pipeline.to_file(filename = 'test', path = tempfile.gettempdir(), silent = True)
+            pipeline.to_file(filename='test', path=tempfile.gettempdir(), silent=True)
             with open(file_path, 'rb') as f:
                 contents = f.read()
         finally:
@@ -77,9 +77,9 @@ class TestHistoricRatesPipeline(unittest.TestCase):
 
     def test_to_list(self):
         pipeline = lattice.HistoricRatesPipeline('BTC-USD', '2017-01-01T00:00:00', '2017-01-01T01:00:00', 3600)
-        test_list = pipeline.to_list(silent = True)
+        test_list = pipeline.to_list(silent=True)
         self.assertIsInstance(test_list, list)
-        self.assertEqual(test_list, [[1483228800,969.9,973.4,973.37,970.27,184.70460239999997]])
+        self.assertEqual(test_list, [[1483228800, 969.9, 973.4, 973.37, 970.27, 184.70460239999997]])
 
 if __name__ == '__main__':
     unittest.main()

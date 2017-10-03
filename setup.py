@@ -12,7 +12,9 @@ setup(
   keywords = ['cryptocurrency', 'gdax', 'csv'],
   install_requires=[
     'requests',
-    'python-dateutil'
+    'python-dateutil',
+    'matplotlib',
+    'pandas'
   ],
   classifiers = [],
 )

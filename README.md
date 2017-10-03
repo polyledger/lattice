@@ -60,15 +60,13 @@ portfolio.history
 
 - This class is used to retrieve historical pricing data of cryptocurrency-fiat pairs.
 
-Note: if start, end, and granularity are not specified then the most recent data is returned.
-
 |Parameter|Type|Default|Description|
 |---------|----|-------|-----------|
-|`product`|string|`'BTC-USD'`|A currency exchange pair|
-|`start`|string|none|Start time in ISO 8601, e.g. `'2017-06-01T04:15:00'`|
-|`end`|string|none|End time in ISO 8601, e.g. `'2017-07-01T04:15:00'`|
-|`granularity`|int|none|Desired timeslice in seconds. Common values are `1`, `60` (minute), `3600` (hour), and `86400` (day).|
-|`silent`|boolean|False|Silence console messages|
+|`product`|string|None|Required. A currency exchange pair|
+|`start`|string|None|Required. Start time in ISO 8601, e.g. `'2017-06-01T04:15:00'`|
+|`end`|string|Resolves to the current datetime|Optional. End time in ISO 8601, e.g. `'2017-07-01T04:15:00'`|
+|`granularity`|int|`86400`|Desired timeslice in seconds. Common values are `1`, `60` (minute), `3600` (hour), and `86400` (day).|
+|`silent`|bool|False|Silence console messages|
 
 #### Methods
 
@@ -79,7 +77,7 @@ to_file(filename, path)
 |Parameter|Type|Default|Description|
 |---------|----|-------|-----------|
 |`filename`|string|`'output'`|Optional. A filename for the market data|
-|`path`|string|none|Optional. The path to a directory where the output file will be saved. If unspecified, the file will be saved in the current working directory.|
+|`path`|string|None|Optional. The path to a directory where the output file will be saved. If unspecified, the file will be saved in the current working directory.|
 
 to_list()
 
@@ -87,7 +85,7 @@ to_list()
 
 |Parameter|Type|Default|Description|
 |---------|----|-------|-----------|
-|`silent`|boolean|False|Silence console messages|
+|`silent`|bool|False|Silence console messages|
 
 ### lattice.Portfolio
 
@@ -119,6 +117,16 @@ get_value(datetime)
 |Parameter|Type|Default|Description|
 |---------|----|-------|-----------|
 |`datetime`|string|Resolves to the current datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`. Useful for backtesting|
+
+historical_value_chart(start, end, silent)
+
+- Displays a chart of a portfolio's historical value. The y-axis is the portfolio's value and the x-axis is the date range.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`start`|string|None|Required. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`, for where the chart begins.|
+|`end`|string|Resolves to the curent datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`, for where the chart ends.|
+|`silent`|bool|False|Optional. Silence console messages|
 
 trade_asset(amount, from_asset, to_asset, datetime)
 

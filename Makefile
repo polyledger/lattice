@@ -11,7 +11,7 @@ init:
 	pip install -r requirements.txt
 
 lint:
-	pylint --rcfile=.pylintrc .
+	find lattice tests -name "*.py" | xargs pylint --rcfile=.pylintrc
 
 test: clean-pyc
 	python3 -m unittest discover --verbose --start-directory tests -b
