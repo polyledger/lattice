@@ -253,10 +253,10 @@ class Portfolio(object):
         for date in date_range:
             values.append(self.get_value(str(date.date())))
 
-        time_series = pd.DataFrame({'date': date_range, 'values': values})
-        axes = time_series.plot()
-        axes.set_xlabel('Date')
-        axes.set_ylabel('Value ($)')
+        time_series = pd.DataFrame(index=date_range, data={'Value': values})
+        ax = time_series.plot(rot=90)
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Value ($)')
         plt.show()
 
     def remove_asset(self, asset='USD', amount=0, datetime=util.current_datetime_string()):
