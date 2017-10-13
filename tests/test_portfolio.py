@@ -59,5 +59,13 @@ class TestPortfolio(unittest.TestCase):
         self.assertTrue(portfolio_4.assets['BTC'] > 0)
         self.assertEqual(len(portfolio_4.history), 2)
 
+    def test_get_historical_value(self):
+        portfolio_5 = lattice.Portfolio()
+        portfolio_5.add_asset('BTC', 20, '2016-01-01')
+        hv = portfolio_5.get_historical_value('2016-01-01', '2017-01-01', freq='W', silent=True)
+        self.assertTrue(len(hv['dates']) <= 22)
+        self.assertTrue(len(hv['values']) <= 22)
+        self.assertEqual(len(hv['dates']), len(hv['values']))
+
 if __name__ == '__main__':
     unittest.main()

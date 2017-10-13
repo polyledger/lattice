@@ -54,7 +54,7 @@ portfolio.assets
 # => {'USD': 350, 'BTC': 120, 'ETH': 0.33032735440821853}
 
 # View a chart of the historical value
-portfolio.historical_value_chart('2016-01-01')
+portfolio.get_historical_value('2016-01-01', chart=True)
 ```
 
 ## API Reference
@@ -140,14 +140,17 @@ get_value(datetime)
 |---------|----|-------|-----------|
 |`datetime`|string|Resolves to the current datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`. Useful for backtesting|
 
-historical_value_chart(start, end, silent)
+get_historical_value(start, end, freq, chart, silent)
 
-- Displays a chart of a portfolio's historical value. The y-axis is the portfolio's value and the x-axis is the date range.
+- Returns historical value data or displays a chart of a portfolio's historical value where the y-axis is the portfolio's value and the x-axis is the date range.
 
 |Parameter|Type|Default|Description|
 |---------|----|-------|-----------|
 |`start`|string|None|Required. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`, for where the chart begins.|
 |`end`|string|Resolves to the curent datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`, for where the chart ends.|
+|`freq`|string|`'D'`|The frequency of data points. See [Offset Aliases](http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases) for valid values.|
+|`chart`|bool|False|Returns historical value data if `True`, otherwise displays a chart.|
+|`date_format`|string|`'%m-%d-%Y'`|The format for the time x-axis labels. See the [strftime](http://strftime.org/) documentation for reference.|
 |`silent`|bool|False|Optional. Silence console messages|
 
 trade_asset(amount, from_asset, to_asset, datetime)
