@@ -6,9 +6,11 @@ import time
 import csv
 import sys
 import os
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import requests
+
 from lattice import util
 
 class _Color:
