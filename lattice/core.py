@@ -242,15 +242,6 @@ class Portfolio(object):
 
     def historical_value_chart(self, start_datetime, end_datetime=util.current_datetime_string(), silent=False):
         """Display a chart of this portfolios value during the specified timeframe."""
-        daily_data = {}
-
-        for asset in self.assets:
-            if asset != 'USD':
-                if not silent:
-                    print(_Color.BLUE + 'INFO - ' + _Color.END + 'Getting historical {0} data...'.format(asset))
-                pipeline = HistoricRatesPipeline('{0}-USD'.format(asset), start_datetime, end_datetime)
-                daily_data[asset] = pipeline.to_list(silent=True)
-
         if not silent:
             print(_Color.BLUE + 'INFO - ' + _Color.END + 'Generating plot...')
 
@@ -279,9 +270,7 @@ class Portfolio(object):
         """Exchanges one asset for another. If it's a backdated trade, the historical exchange rate is used."""
         price = self.__get_price(from_asset, unit=to_asset, datetime=datetime)
         self.remove_asset(from_asset, amount, datetime)
-        self.history.append({'datetime': datetime, 'asset': from_asset, 'amount': -amount})
         self.add_asset(to_asset, amount * price, datetime)
-        self.history.append({'datetime': datetime, 'asset': to_asset, 'amount': amount})
 
 class TradingStrategy(object):
 
