@@ -209,11 +209,11 @@ class Portfolio(object):
             raise ValueError('Received an unsupported unit \'{0}\'. Must be one of {1}'.format(unit, ', '.join(supported_units)))
 
         product = '{0}-{1}'.format(asset, unit) if unit == 'USD' else '{1}-{0}'.format(asset, unit)
-        # To ensure a single price is returned, we set set a one minute timeframe
-        # and a granularity of 60
+        # To ensure a single price is returned, we set set a one hour timeframe
+        # and a granularity of 3600
         start = datetime
-        end = str(util.timestamp_to_datetime(util.datetime_string_to_timestamp(datetime) + 60))
-        granularity = 60
+        end = str(util.timestamp_to_datetime(util.datetime_string_to_timestamp(datetime) + 3600))
+        granularity = 3600
         pipeline = HistoricRatesPipeline(product, start, end, granularity)
         rate = pipeline.to_list(silent=True)[0][4]
 
@@ -245,6 +245,8 @@ class Portfolio(object):
         if not silent:
             print(_Color.BLUE + 'INFO - ' + _Color.END + 'Generating plot...')
 
+        # TODO: write an algorithm to optimize the number of x-axis ticks
+        # since every date results in an API call.
         date_range = pd.date_range(start_datetime, end_datetime, freq='D')
         values = []
 
