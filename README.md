@@ -42,11 +42,19 @@ portfolio.remove_asset('USD', 50)  # Removed at current time
 
 # View the current portfolio
 portfolio.assets
-# => { 'USD': 450, 'BTC': 120 }
+# => {'USD': 450, 'BTC': 120}
 
 # View the portfolio's history
 portfolio.history
 # => [{'amount': 500, 'asset': 'USD', 'datetime': '2017-09-24 18:57:30.665223'}, {'amount': 100, 'asset': 'BTC', 'datetime': '2017-09-24 18:57:30.665223'}, {'amount': 20, 'asset': 'BTC', 'datetime': '2016-01-01'}, {'amount': -50, 'asset': 'USD', 'datetime': '2017-09-24 18:57:30.665241'}]
+
+# Trade an asset for its real-time market value
+portfolio.trade_asset(100, 'USD', 'ETH')
+portfolio.assets
+# => {'USD': 350, 'BTC': 120, 'ETH': 0.33032735440821853}
+
+# View a chart of the historical value
+portfolio.historical_value_chart('2016-01-01')
 ```
 
 ## API Reference
@@ -97,6 +105,20 @@ to_list()
 |---------|----|-------|-----------|
 |`assets`|dict|`{}`|A dictionary of currency/amount key-value pairs, e.g. `{'ETH': 50}`|
 |`initial_funds`|tuple|`('USD', 0)`|A tuple containing the initial investment|
+
+#### Attributes
+
+assets : dict
+
+- A dict of asset, value pairs held in the portfolio.
+
+created_at : string
+
+- A datetime string indicating when the portfolio was created.
+
+history: list
+
+- A list of dictionaries containing all changes of assets in this portfolio. The dictionaries indicate either an increase or decrease in the value of an asset and the time the change occurred.
 
 #### Methods
 
