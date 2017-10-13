@@ -29,7 +29,11 @@ class _GdaxPublicClient(object):
         self._url = url
 
     def get_product_historic_rates(self, params):
-        """Get historic rates for product_id from GDAX."""
+        """
+        Get historic rates for product_id from GDAX.
+        :param params: url parameters for api call
+        :return:
+        """
         product = params['product']
         params = dict(params)  # Make a local copy of params
         del params['product']
@@ -69,7 +73,11 @@ class HistoricRatesPipeline(Pipeline):
         self._granularity = granularity
 
     def get_request_count(self, silent=False):
-        """Check how many API calls need to be made."""
+        """
+        Check how many API calls need to be made.
+        :param silent: boolean indicating to silence info messages
+        :returns: the number of requests to be made
+        """
         # Convert start and end to timestamp integer
         start = util.datetime_string_to_timestamp(self._start)
         end = util.datetime_string_to_timestamp(self._end)
@@ -86,11 +94,14 @@ class HistoricRatesPipeline(Pipeline):
         return request_count
 
     def partition_request(self, silent=False):
-        """Returns a list of (start, end) datetime tuples.
+        """
+        Returns a list of (start, end) datetime tuples. Requests have to be
+        partitioned into smaller chunks that result in less than MAX_CANDLES
+        response length. Longer date ranges and smaller granularities will
+        increase the number of partitions.
 
-        Requests have to be partitioned into smaller chunks that result in less
-        than MAX_CANDLES response length. Longer date ranges and smaller
-        granularities will increase the number of partitions.
+        :param silent: boolean indicating to silence info messages
+        :returns: a list of start/end datetime tuples
         """
         request_count = self.get_request_count(silent=silent)
 
@@ -118,7 +129,13 @@ class HistoricRatesPipeline(Pipeline):
         return partitions
 
     def to_file(self, filename='output', path=os.getcwd(), silent=False):
-        """Output historical rates to file."""
+        """
+        Output historical rates to file.
+
+        :param filename: the name for the created file
+        :param path: an absolute path to where the file will be created
+        :param silent: boolean indicating to silence info messages
+        """
         if not silent:
             print(_Color.BLUE + 'Requesting data from ' + _Color.CYAN + _Color.UNDERLINE + 'https://api.gdax.com' + _Color.END + _Color.BLUE + '...' + _Color.END)
 
@@ -152,7 +169,12 @@ class HistoricRatesPipeline(Pipeline):
             print(_Color.GREEN + 'SUCCESS - ' + _Color.END + 'Write to {0}.csv complete.'.format(filename))
 
     def to_list(self, silent=False):
-        """Returns historical rates as a list."""
+        """
+        Returns historical rates as a list.
+
+        :param silent: boolean indicating to silence info messages
+        :returns: a multi-dimentsional list of historical pricing data
+        """
         if not silent:
             print(_Color.YELLOW + 'WARNING - ' + _Color.END + 'This holds all data in memory. I sure hope you know what you are doing.')
             print(_Color.BLUE + 'Requesting data from ' + _Color.CYAN + _Color.UNDERLINE + 'https://api.gdax.com' + _Color.END + _Color.BLUE + '...' + _Color.END)
@@ -192,7 +214,13 @@ class Portfolio(object):
         self.history = []
 
     def add_asset(self, asset='USD', amount=0, datetime=util.current_datetime_string()):
-        """Adds the given amount of an asset to this portfolio."""
+        """
+        Adds the given amount of an asset to this portfolio.
+
+        :param asset: the asset to add to the portfolio
+        :param amount: the amount of the asset to add
+        :param datetime: a datetime string indicating the time the asset was added
+        """
         if amount < 0:
             raise ValueError('Asset amount must be greater than zero. Given amount: {}'.format(amount))
         if asset not in self.assets:
@@ -202,7 +230,14 @@ class Portfolio(object):
         self.history.append({'datetime': datetime, 'asset': asset, 'amount': +amount})
 
     def __get_price(self, asset, unit='USD', datetime=util.current_datetime_string()):
-        """Gets the price of a given asset at a given time."""
+        """
+        Gets the price of a given asset at a given time.
+
+        :param asset: the asset to check the price of
+        :param unit: the unit of the price data
+        :param datetime: the datetime to check the price at
+        :returns: the price of the asset
+        """
         supported_units = ['USD', 'BTC', 'ETH', 'LTC']
 
         if unit not in supported_units:
@@ -227,7 +262,12 @@ class Portfolio(object):
         return 1/rate if asset == 'USD' else rate
 
     def get_value(self, datetime=util.current_datetime_string()):
-        """Get the value of the portfolio at a given time."""
+        """
+        Get the value of the portfolio at a given time.
+
+        :param datetime: a datetime to check the portfolio's value at
+        :returns: the value of the portfolio
+        """
         value = 0
 
         # Backdate the portfolio by changing its values temporarily
@@ -248,7 +288,17 @@ class Portfolio(object):
         return value
 
     def get_historical_value(self, start_datetime, end_datetime=util.current_datetime_string(), freq='D', date_format='%m-%d-%Y', chart=False, silent=False):
-        """Display a chart of this portfolios value during the specified timeframe."""
+        """
+        Display a chart of this portfolios value during the specified timeframe.
+
+        :param start_datetime: the left bound of the time interval
+        :param end_datetime: the right bound of the time interval
+        :param freq: a time frequency within the interval
+        :param date_format: the format of the date/x-axis labels
+        :param chart: whether to display a chart or return data
+        :param silent: boolean indicating to silence info messages
+        :returns: a dict of historical value data if chart is false
+        """
         if not silent:
             print(_Color.BLUE + 'INFO - ' + _Color.END + 'Getting pricing data...')
 
@@ -281,7 +331,13 @@ class Portfolio(object):
             return {'dates': time_series.index.strftime(date_format).tolist(), 'values': values}
 
     def remove_asset(self, asset='USD', amount=0, datetime=util.current_datetime_string()):
-        """Removes the given amount of an asset to this portfolio."""
+        """
+        Removes the given amount of an asset to this portfolio.
+
+        :param asset: the asset to add to the portfolio
+        :param amount: the amount of the asset to add
+        :param datetime: a datetime string indicating the time the asset was added
+        """
         if amount < 0:
             raise ValueError('Asset amount must be greater than zero. Given amount: {}'.format(amount))
         if self.assets[asset] < amount:
@@ -290,7 +346,14 @@ class Portfolio(object):
         self.history.append({'datetime': datetime, 'asset': asset, 'amount': -amount})
 
     def trade_asset(self, amount, from_asset, to_asset, datetime=util.current_datetime_string()):
-        """Exchanges one asset for another. If it's a backdated trade, the historical exchange rate is used."""
+        """
+        Exchanges one asset for another. If it's a backdated trade, the historical exchange rate is used.
+
+        :param amount: the amount of the asset to trade
+        :param from_asset: the asset you are selling
+        :param to_asset: the asset you are buying
+        :param datetime: a datetime string indicating the time the asset was traded
+        """
         price = self.__get_price(from_asset, unit=to_asset, datetime=datetime)
         self.remove_asset(from_asset, amount, datetime)
         self.add_asset(to_asset, amount * price, datetime)
