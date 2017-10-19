@@ -26,7 +26,7 @@ class TestPortfolio(unittest.TestCase):
             portfolio_1.add_asset('USD', -10000)
 
     def test_get_value(self):
-        portfolio_2 = lattice.Portfolio({'USD': 10000})
+        portfolio_2 = lattice.Portfolio({'USD': 10000}, '2016-01-01')
         self.assertEqual(portfolio_2.get_value(), 10000)
 
         # The prices at the given dates are accurate.
@@ -40,12 +40,20 @@ class TestPortfolio(unittest.TestCase):
         # Ensure that the value before adding BTC, ETH, and LTC is the original 10000 USD
         self.assertEqual(portfolio_2.get_value('2016-01-01'), 10000)
 
+        # Ensure that getting the value of a single asset works
+        self.assertEqual(portfolio_2.get_value('2017-01-01', 'BTC'), 48513.5)
+
+        # If you try getting the value of an asset that doesn't exist in the
+        # portfolio at the given time, ensure it raises an error
+        with self.assertRaises(ValueError):
+            portfolio_2.get_value('2015-01-01', 'USD')
+
     def test_remove_asset(self):
         portfolio_3 = lattice.Portfolio({'USD': 10000})
         portfolio_3.remove_asset('USD', 1000)
 
         self.assertEqual(portfolio_3.assets['USD'], 9000)
-        self.assertEqual(len(portfolio_3.history), 1)
+        self.assertEqual(len(portfolio_3.history), 2)
         self.assertEqual(portfolio_3.history[0]['asset'], 'USD')
         self.assertIsNot(portfolio_3.history[0]['amount'], -100)
 
@@ -57,7 +65,7 @@ class TestPortfolio(unittest.TestCase):
         portfolio_4.trade_asset(1000, 'USD', 'BTC')
         self.assertEqual(portfolio_4.assets['USD'], 9000)
         self.assertTrue(portfolio_4.assets['BTC'] > 0)
-        self.assertEqual(len(portfolio_4.history), 2)
+        self.assertEqual(len(portfolio_4.history), 3)
 
     def test_get_historical_value(self):
         portfolio_5 = lattice.Portfolio()

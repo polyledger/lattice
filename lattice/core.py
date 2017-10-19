@@ -210,10 +210,12 @@ class HistoricRatesPipeline(Pipeline):
 
 class Portfolio(object):
 
-    def __init__(self, assets={}):
-        self.assets = assets
-        self.created_at = util.current_datetime_string()
+    def __init__(self, assets={}, created_at=util.current_datetime_string()):
+        self.assets = {}
+        self.created_at = created_at
         self.history = []
+        for asset, amount in assets.items():
+            self.add_asset(asset, amount, created_at)
 
     def add_asset(self, asset='USD', amount=0, datetime=util.current_datetime_string()):
         """
@@ -263,10 +265,12 @@ class Portfolio(object):
         rate = data[0][4]
         return 1/rate if asset == 'USD' else rate
 
-    def get_value(self, datetime=util.current_datetime_string()):
+    def get_value(self, datetime=util.current_datetime_string(), asset=None):
         """
         Get the value of the portfolio at a given time.
 
+        :param asset: gets the value of a given asset in this portfolio if
+                      specified; if None, returns the portfolio's value
         :param datetime: a datetime to check the portfolio's value at
         :returns: the value of the portfolio
         """
@@ -281,12 +285,21 @@ class Portfolio(object):
                 if backdated_assets[trade['asset']] == 0:
                     del backdated_assets[trade['asset']]
 
-        for asset in backdated_assets:
-            amount = backdated_assets[asset]
+        if asset:
             if asset != 'USD':
-                value += self.__get_price(asset, unit='USD', datetime=datetime) * amount
+                amount = backdated_assets[asset]
+                value = self.__get_price(asset, unit='USD', datetime=datetime) * amount
             else:
-                value += amount
+                if asset not in backdated_assets:
+                    raise ValueError('This portfolio does not contain {0}'.format(asset))
+                return backdated_assets['USD']
+        else:
+            for asset in backdated_assets:
+                amount = backdated_assets[asset]
+                if asset != 'USD':
+                    value += self.__get_price(asset, unit='USD', datetime=datetime) * amount
+                else:
+                    value += amount
         return value
 
     def get_historical_value(self, start_datetime, end_datetime=util.current_datetime_string(), freq='D', date_format='%m-%d-%Y', chart=False, silent=False):
@@ -342,7 +355,7 @@ class Portfolio(object):
         """
         if amount < 0:
             raise ValueError('Asset amount must be greater than zero. Given amount: {}'.format(amount))
-        if self.assets[asset] < amount:
+        if self.get_value(datetime, asset) < amount:
             raise ValueError('Removal of {0} requested but only {1} exists in portfolio.'.format(amount, self.assets[asset]))
         self.assets[asset] -= amount
         self.history.append({'datetime': datetime, 'asset': asset, 'amount': -amount})

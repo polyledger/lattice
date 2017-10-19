@@ -97,14 +97,14 @@ to_list()
 
 ### lattice.Portfolio
 
-*class* `lattice.Portfolio(assets, initial_funds)`
+*class* `lattice.Portfolio(assets, created_at)`
 
 - This class is used to represent a portfolio whose value can be determined for different datetimes, which is particularly useful for backtesting and/or predictive modeling.
 
 |Parameter|Type|Default|Description|
 |---------|----|-------|-----------|
 |`assets`|dict|`{}`|A dictionary of currency/amount key-value pairs, e.g. `{'ETH': 50}`|
-|`initial_funds`|tuple|`('USD', 0)`|A tuple containing the initial investment|
+|`created_at`|string|Resolves to the current datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`.|
 
 #### Attributes
 
@@ -132,13 +132,14 @@ add_asset(asset, amount, datetime)
 |`amount`|float|`0`|The amount of the asset to add to the portfolio|
 |`datetime`|string|Resolves to the current datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`. Useful for backtesting|
 
-get_value(datetime)
+get_value(datetime, asset)
 
 - Gets the value of the portfolio at the specified datetime.
 
 |Parameter|Type|Default|Description|
 |---------|----|-------|-----------|
 |`datetime`|string|Resolves to the current datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`. Useful for backtesting|
+|`asset`|string|None|Optional. If specified, returns the value of the asset at the given time instead of the portfolio value.|
 
 get_historical_value(start, end, freq, chart, silent)
 
