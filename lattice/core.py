@@ -58,17 +58,11 @@ class _GdaxPublicClient(object):
 
         return res.json()
 
-class Pipeline(object):
-
-    def __init__(self):
-        pass
-
-class HistoricRatesPipeline(Pipeline):
+class HistoricRatesPipeline(object):
 
     MAX_CANDLES = 200
 
     def __init__(self, product, start, end=util.current_datetime_string(), granularity=86400):
-        Pipeline.__init__(self)
         self._product = product
         self._start = start
         self._end = end
@@ -372,8 +366,3 @@ class Portfolio(object):
         price = self.__get_price(from_asset, unit=to_asset, datetime=datetime)
         self.remove_asset(from_asset, amount, datetime)
         self.add_asset(to_asset, amount * price, datetime)
-
-class TradingStrategy(object):
-
-    def __init__(self):
-        pass

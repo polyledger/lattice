@@ -185,7 +185,7 @@ This project uses [virtualenv](http://pypi.python.org/pypi/virtualenv) to isolat
 
 - Create the virtual environment with `python3 -m venv venv`.
 - Activate the virtual environment from within the project directory with `$ source venv/bin/activate`.
-- Now you can install the project dependencies with `(venv) $ pip install -r requirements.txt`.
+- Now you can install the project dependencies with `(venv) $ pip3 install -r requirements.txt`.
 - When you are done working in the virtual environment, you can deactivate it: `(env) $ deactivate`. See the [python guide](http://docs.python-guide.org/en/latest/dev/virtualenvs/) for more information.
 
 **Makefile**
