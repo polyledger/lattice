@@ -1,8 +1,6 @@
 # Lattice
 
-[![PyPI version](https://badge.fury.io/py/lattice.svg)](https://badge.fury.io/py/lattice)
-
-> A cryptocurrency market data utility Python package
+> A cryptocurrency analytics Python package
 
 Currently, Lattice uses the Global Digital Asset Exchange (GDAX) to download historical data and execute trades, but more data sources are planned to be included. Lattice also includes a virtual market environment for backtesting trading algorithms.
 
@@ -11,10 +9,10 @@ Currently, Lattice uses the Global Digital Asset Exchange (GDAX) to download his
 **Creating CSV files from GDAX price data**
 
 ``` python
-import lattice
+from lattice.data import HistoricRatesPipeline
 
 # Configure for BTC-USD prices between 2015-01-01 and 2017-06-1 with hourly price intervals
-pipeline = lattice.HistoricRatesPipeline('BTC-USD', '2015-01-01', '2017-06-01', 3600)
+pipeline = HistoricRatesPipeline('BTC-USD', '2015-01-01', '2017-06-01', 3600)
 
 # Output the data to `BTC_USD__2015_01_01__2017_06_01__hourly.csv`
 pipeline.to_file('BTC_USD__2015_01_01__2017_06_01__hourly')
@@ -23,81 +21,44 @@ pipeline.to_file('BTC_USD__2015_01_01__2017_06_01__hourly')
 **Backtesting trading strategies**
 
 ``` python
-import lattice
+from lattice.backtest import Portfolio
 
-# Create an empty portfolio
-portfolio = lattice.Portfolio()
+# Create a portfolio on October 1st 2017 with $100k
+portfolio = Portfolio({'USD': 100000}, '2017-10-01')
 
-# Add some assets
-portfolio.add_asset('USD', 500)  # Added at current time
-portfolio.add_asset('BTC', 100)
-portfolio.add_asset('BTC', 20, '2016-01-01')  # Adds BTC to portfolio in the past
+# Make some trades
+portfolio.trade_asset(39000, 'USD', 'BTC', '2017-10-01')
+portfolio.trade_asset(39000, 'USD', 'ETH', '2017-10-01')
+portfolio.trade_asset(22000, 'USD', 'LTC', '2017-10-01')
 
 # Get the current value
-portfolio.get_value()  # Returns today's value of portfolio with 500 USD and 120 BTC
-portfolio.get_value('2016-01-01')  # Returns value of portfolio with 20 BTC at given date
+portfolio.get_value()
+portfolio.get_value('2017-10-24') # at a given date
 
 # Remove some assets
-portfolio.remove_asset('USD', 50)  # Removed at current time
+portfolio.trade_asset(1.5, 'BTC', 'USD')  # Traded at current time
 
 # View the current portfolio
 portfolio.assets
-# => {'USD': 450, 'BTC': 120}
+# => {'USD': 8515.5, 'BTC': 8.8335220838, 'ETH': 130.434782609, 'LTC': 423.07692307}
 
 # View the portfolio's history
 portfolio.history
-# => [{'amount': 500, 'asset': 'USD', 'datetime': '2017-09-24 18:57:30.665223'}, {'amount': 100, 'asset': 'BTC', 'datetime': '2017-09-24 18:57:30.665223'}, {'amount': 20, 'asset': 'BTC', 'datetime': '2016-01-01'}, {'amount': -50, 'asset': 'USD', 'datetime': '2017-09-24 18:57:30.665241'}]
-
-# Trade an asset for its real-time market value
-portfolio.trade_asset(100, 'USD', 'ETH')
-portfolio.assets
-# => {'USD': 350, 'BTC': 120, 'ETH': 0.33032735440821853}
+# => [{'amount': 100000, 'asset': 'USD', 'datetime': '2017-10-01 00:00:00'}, {'amount': -39000, 'asset': 'USD', 'datetime': '2017-10-01 00:00:00'}, {'amount': 8.8335220838, 'asset': 'BTC', 'datetime': '2017-10-01 00:00:00'}, {'amount': -39000, 'asset': 'USD', 'datetime': '2017-10-01 00:00:00'}, {'amount': 130.434782609, 'asset': 'ETH', 'datetime': '2017-10-01'00:00:00 }, {'amount': -22000, 'asset': 'USD', 'datetime': '2017-10-01 00:00:00'}, {'amount': 423.07692307, 'asset': 'LTC', 'datetime': '2017-10-01'00:00:00 }, {'amount': -1.5, 'asset': 'BTC', 'datetime': '2017-10-24 18:57:30.665241' }, {'amount': 8515.5, 'asset': 'USD', 'datetime': '2017-10-24 18:57:30.665241' }]
 
 # View a chart of the historical value
-portfolio.get_historical_value('2016-01-01', chart=True)
+portfolio.get_historical_value('2017-10-01', chart=True)
 ```
 
 ## API Reference
 
-- [lattice.HistoricRatesPipeline](#latticehistoricratespipeline)
-- [lattice.Portfolio](#latticeportfolio)
+- [lattice.backtest.Portfolio](#latticebacktestportfolio)
+- [lattice.data.HistoricRatesPipeline](#latticedatahistoricratespipeline)
+- [lattice.optimize.allocate](#latticeoptimizeallocate)
 
-### lattice.HistoricRatesPipeline
+### lattice.backtest.Portfolio
 
-*class* `lattice.HistoricRatesPipeline(product, start, end, granularity)`
-
-- This class is used to retrieve historical pricing data of cryptocurrency-fiat pairs.
-
-|Parameter|Type|Default|Description|
-|---------|----|-------|-----------|
-|`product`|string|None|Required. A currency exchange pair|
-|`start`|string|None|Required. Start time in ISO 8601, e.g. `'2017-06-01T04:15:00'`|
-|`end`|string|Resolves to the current datetime|Optional. End time in ISO 8601, e.g. `'2017-07-01T04:15:00'`|
-|`granularity`|int|`86400`|Desired timeslice in seconds. Common values are `1`, `60` (minute), `3600` (hour), and `86400` (day).|
-|`silent`|bool|False|Silence console messages|
-
-#### Methods
-
-to_file(filename, path)
-
-- Outputs market data to a CSV file. The column headers are time, low, high, open, close, volume.
-
-|Parameter|Type|Default|Description|
-|---------|----|-------|-----------|
-|`filename`|string|`'output'`|Optional. A filename for the market data|
-|`path`|string|None|Optional. The path to a directory where the output file will be saved. If unspecified, the file will be saved in the current working directory.|
-
-to_list()
-
-- Outputs market data to an in-memory list. The column headers are time, low, high, open, close, volume. Use this method at your own risk.
-
-|Parameter|Type|Default|Description|
-|---------|----|-------|-----------|
-|`silent`|bool|False|Silence console messages|
-
-### lattice.Portfolio
-
-*class* `lattice.Portfolio(assets, created_at)`
+*class* `lattice.backtest.Portfolio(assets, created_at)`
 
 - This class is used to represent a portfolio whose value can be determined for different datetimes, which is particularly useful for backtesting and/or predictive modeling.
 
@@ -174,6 +135,43 @@ remove_asset(asset, amount, datetime)
 |`asset`|string|`'USD'`|An asset name. Current acceptable values are `BTC`, `ETH`, `LTC`, and `USD`.|
 |`amount`|float|`0`|The amount of the asset to remove from the portfolio|
 |`datetime`|string|Resolves to the current datetime|Optional. A time in ISO 8601, e.g. `'2017-06-01T04:15:00'`. Useful for backtesting|
+
+### lattice.data.HistoricRatesPipeline
+
+*class* `lattice.data.HistoricRatesPipeline(product, start, end, granularity)`
+
+- This class is used to retrieve historical pricing data of cryptocurrency-fiat pairs.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`product`|string|None|Required. A currency exchange pair|
+|`start`|string|None|Required. Start time in ISO 8601, e.g. `'2017-06-01T04:15:00'`|
+|`end`|string|Resolves to the current datetime|Optional. End time in ISO 8601, e.g. `'2017-07-01T04:15:00'`|
+|`granularity`|int|`86400`|Desired timeslice in seconds. Common values are `1`, `60` (minute), `3600` (hour), and `86400` (day).|
+|`silent`|bool|False|Silence console messages|
+
+#### Methods
+
+to_file(filename, path)
+
+- Outputs market data to a CSV file. The column headers are time, low, high, open, close, volume.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`filename`|string|`'output'`|Optional. A filename for the market data|
+|`path`|string|None|Optional. The path to a directory where the output file will be saved. If unspecified, the file will be saved in the current working directory.|
+
+to_list()
+
+- Outputs market data to an in-memory list. The column headers are time, low, high, open, close, volume. Use this method at your own risk.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`silent`|bool|False|Silence console messages|
+
+### lattice.optimize.allocate
+
+Allocates a portfolio given the user's risk tolerance. TBD.
 
 ## Development
 
