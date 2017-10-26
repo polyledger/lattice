@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
   name = 'lattice',
   packages = find_packages(),
-  version = '0.3.1',
+  version = '0.3.2',
   description = 'A cryptocurrency market data utility package',
   author = 'Matthew Rosendin, Farshad Miraftab',
   author_email = 'matthew@polyledger.com, farshad@polyledger.com',
@@ -14,7 +14,9 @@ setup(
     'requests',
     'python-dateutil',
     'matplotlib',
-    'pandas'
+    'pandas',
+    'scipy',
+    'numpy'
   ],
   classifiers = [],
 )
