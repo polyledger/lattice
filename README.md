@@ -171,7 +171,14 @@ to_list()
 
 ### lattice.optimize.allocate
 
-Allocates a portfolio given the user's risk tolerance. TBD.
+allocate(risk_index, dataframe)
+
+- Allocates a portfolio given the user's risk tolerance.
+
+|Parameter|Type|Default|Description|
+|---------|----|-------|-----------|
+|`risk_index`|integer|None|A risk score from 1-10.|
+|`dataframe`|Pandas.DataFrame|None|Optional. A Pandas DataFrame with a timestamp index and closing prices of coins as columns.|
 
 ## Development
 
@@ -191,6 +198,19 @@ This project uses [virtualenv](http://pypi.python.org/pypi/virtualenv) to isolat
 Lattice comes with a Makefile which enables some useful commands. From the project root, run `make help` for a list of commands.
 
 ### Packaging and Distributing
+
+#### GitHub Release
+
+Before tagging a release, ensure that `make test` and `make lint` pass without errors.
+
+```
+$ git tag -a MAJOR.MINOR.PATCH -m "Description of release goes here"
+$ git push --tags
+```
+
+Although not necessary, you should also update the version in `setup.py`.
+
+#### PyPi
 
 Ensure `wheel` and `twine` are installed. Then inside the directory,
 

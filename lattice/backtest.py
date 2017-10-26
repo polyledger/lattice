@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+"""
+This module allows backtesting of mock portfolios. Refer to the README for
+usage.
+"""
+
 from __future__ import print_function
 
 import matplotlib.pyplot as plt
@@ -9,31 +14,44 @@ from lattice import util
 from lattice.data import HistoricRatesPipeline
 
 class Portfolio(object):
+    """
+    An object that contains the state of a mock portfolio at any given time.
+    """
 
-    def __init__(self, assets={}, created_at=util.current_datetime_string()):
-        self.assets = {}
+    def __init__(self, assets=None, created_at=util.current_datetime_string()):
         self.created_at = created_at
         self.history = []
-        for asset, amount in assets.items():
-            self.add_asset(asset, amount, created_at)
+        if assets:
+            self.assets = {}
+            for asset, amount in assets.items():
+                self.add_asset(asset, amount, created_at)
+        else:
+            self.assets = {'USD': 0}
 
-    def add_asset(self, asset='USD', amount=0, datetime=util.current_datetime_string()):
+    def add_asset(self, asset='USD', amount=0,
+                  datetime=util.current_datetime_string()):
         """
         Adds the given amount of an asset to this portfolio.
 
         :param asset: the asset to add to the portfolio
         :param amount: the amount of the asset to add
-        :param datetime: a datetime string indicating the time the asset was added
+        :param datetime: datetime string indicating the time the asset was added
         """
         if amount < 0:
-            raise ValueError('Asset amount must be greater than zero. Given amount: {}'.format(amount))
+            raise ValueError('Asset amount must be greater than zero. '
+                             'Given amount: {}'.format(amount))
         if asset not in self.assets:
             self.assets[asset] = amount
         else:
             self.assets[asset] += amount
-        self.history.append({'datetime': datetime, 'asset': asset, 'amount': +amount})
+        self.history.append({
+            'datetime': datetime,
+            'asset': asset,
+            'amount': +amount
+        })
 
-    def __get_price(self, asset, unit='USD', datetime=util.current_datetime_string()):
+    @staticmethod
+    def __get_price(asset, unit='USD', datetime=util.current_datetime_string()):
         """
         Gets the price of a given asset at a given time.
 
@@ -45,21 +63,30 @@ class Portfolio(object):
         supported_units = ['USD', 'BTC', 'ETH', 'LTC']
 
         if unit not in supported_units:
-            raise ValueError('Received an unsupported unit \'{0}\'. Must be one of {1}'.format(unit, ', '.join(supported_units)))
+            expected = ', '.join(supported_units)
+            raise ValueError('Received an unsupported unit \'{0}\'. '
+                             'Must be one of {1}'.format(unit, expected))
 
-        product = '{0}-{1}'.format(asset, unit) if unit == 'USD' else '{1}-{0}'.format(asset, unit)
+        if unit == 'USD':
+            product = '{0}-{1}'.format(asset, unit)
+        else:
+            product = '{1}-{0}'.format(asset, unit)
         # To ensure a single price is returned, we set set a one hour timeframe
         # and a granularity of 3600
         start = datetime
-        end = str(util.timestamp_to_datetime(util.datetime_string_to_timestamp(datetime) + 3600))
+        end = str(util.timestamp_to_datetime(
+            util.datetime_string_to_timestamp(datetime) + 3600
+        ))
         granularity = 3600
         pipeline = HistoricRatesPipeline(product, start, end, granularity)
         data = pipeline.to_list(silent=True)
 
         if not data:
-            # Retry with a wider window. This may result in slightly inaccurate data, but it's
-            # the best we can do right now.
-            end = str(util.timestamp_to_datetime(util.datetime_string_to_timestamp(end) + 3600))
+            # Retry with a wider window. This may result in slightly inaccurate
+            # data, but it's the best we can do right now.
+            end = str(util.timestamp_to_datetime(
+                util.datetime_string_to_timestamp(end) + 3600
+            ))
             pipeline = HistoricRatesPipeline(product, start, end, granularity)
             data = pipeline.to_list(silent=True)
         rate = data[0][4]
@@ -88,21 +115,34 @@ class Portfolio(object):
         if asset:
             if asset != 'USD':
                 amount = backdated_assets[asset]
-                value = self.__get_price(asset, unit='USD', datetime=datetime) * amount
+                price = self.__get_price(asset, unit='USD', datetime=datetime)
+                value = price * amount
             else:
                 if asset not in backdated_assets:
-                    raise ValueError('This portfolio does not contain {0}'.format(asset))
+                    raise ValueError('This portfolio does not contain {0}'
+                                     .format(asset))
                 return backdated_assets['USD']
         else:
-            for asset in backdated_assets:
-                amount = backdated_assets[asset]
-                if asset != 'USD':
-                    value += self.__get_price(asset, unit='USD', datetime=datetime) * amount
+            for backdated_asset in backdated_assets:
+                amount = backdated_assets[backdated_asset]
+                if backdated_asset != 'USD':
+                    price = self.__get_price(
+                        backdated_asset, unit='USD', datetime=datetime
+                    )
+                    value += price * amount
                 else:
                     value += amount
         return value
 
-    def get_historical_value(self, start_datetime, end_datetime=util.current_datetime_string(), freq='D', date_format='%m-%d-%Y', chart=False, silent=False):
+    def get_historical_value(
+            self,
+            start_datetime,
+            end_datetime=util.current_datetime_string(),
+            freq='D',
+            date_format='%m-%d-%Y',
+            chart=False,
+            silent=False
+        ):
         """
         Display a chart of this portfolios value during the specified timeframe.
 
@@ -115,7 +155,8 @@ class Portfolio(object):
         :returns: a dict of historical value data if chart is false
         """
         if not silent:
-            print(_Color.BLUE + 'INFO - ' + _Color.END + 'Getting pricing data...')
+            print(util.Color.BLUE + 'INFO - ' + util.Color.END +
+                  'Getting pricing data...')
 
         date_range = pd.date_range(start_datetime, end_datetime, freq=freq)
 
@@ -138,36 +179,56 @@ class Portfolio(object):
         time_series = pd.DataFrame(index=date_range, data={'Value': values})
 
         if chart:
-            ax = time_series.plot(rot=90)
-            ax.set_xlabel('Date')
-            ax.set_ylabel('Value ($)')
+            axes = time_series.plot(rot=90)
+            axes.set_xlabel('Date')
+            axes.set_ylabel('Value ($)')
             plt.show()
         else:
-            return {'dates': time_series.index.strftime(date_format).tolist(), 'values': values}
+            dates = time_series.index.strftime(date_format).tolist()
+            return {'dates': dates, 'values': values}
 
-    def remove_asset(self, asset='USD', amount=0, datetime=util.current_datetime_string()):
+    def remove_asset(
+            self,
+            asset='USD',
+            amount=0,
+            datetime=util.current_datetime_string()
+        ):
         """
         Removes the given amount of an asset to this portfolio.
 
         :param asset: the asset to add to the portfolio
         :param amount: the amount of the asset to add
-        :param datetime: a datetime string indicating the time the asset was added
+        :param datetime: datetime string indicating the time the asset was added
         """
         if amount < 0:
-            raise ValueError('Asset amount must be greater than zero. Given amount: {}'.format(amount))
+            raise ValueError('Asset amount must be greater than zero. '
+                             'Given amount: {}'.format(amount))
         if self.get_value(datetime, asset) < amount:
-            raise ValueError('Removal of {0} requested but only {1} exists in portfolio.'.format(amount, self.assets[asset]))
+            raise ValueError('Removal of {0} requested but only {1} exists in '
+                             'portfolio.'.format(amount, self.assets[asset]))
         self.assets[asset] -= amount
-        self.history.append({'datetime': datetime, 'asset': asset, 'amount': -amount})
+        self.history.append({
+            'datetime': datetime,
+            'asset': asset,
+            'amount': -amount
+        })
 
-    def trade_asset(self, amount, from_asset, to_asset, datetime=util.current_datetime_string()):
+    def trade_asset(
+            self,
+            amount,
+            from_asset,
+            to_asset,
+            datetime=util.current_datetime_string()
+        ):
         """
-        Exchanges one asset for another. If it's a backdated trade, the historical exchange rate is used.
+        Exchanges one asset for another. If it's a backdated trade, the
+        historical exchange rate is used.
 
         :param amount: the amount of the asset to trade
         :param from_asset: the asset you are selling
         :param to_asset: the asset you are buying
-        :param datetime: a datetime string indicating the time the asset was traded
+        :param datetime: datetime string indicating the time the asset was
+                         traded
         """
         price = self.__get_price(from_asset, unit=to_asset, datetime=datetime)
         self.remove_asset(from_asset, amount, datetime)

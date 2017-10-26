@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+This module creates optimal portfolio allocations, given a risk index.
+"""
+
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
@@ -7,15 +11,19 @@ from scipy.optimize import minimize
 from lattice.data import HistoricRatesPipeline
 
 
-supported_coins = ['BTC', 'ETH', 'LTC']
+SUPPORTED_COINS = ['BTC', 'ETH', 'LTC']
 
-def retrieve_data():
+def retrieve_data(start='2015-01-01', end='2017-09-01'):
+    """
+    Retrives data for SUPPORTED_COINS as a DataFrame for the given dates.
+    """
+
     #==== Retrieve data ====#
-    coins = dict.fromkeys(supported_coins)
+    coins = dict.fromkeys(SUPPORTED_COINS)
 
-    for coin in supported_coins:
+    for coin in SUPPORTED_COINS:
         pipeline = HistoricRatesPipeline(
-            '{}-USD'.format(coin), '2015-01-01', '2017-09-01', 86400
+            '{}-USD'.format(coin), start, end, 86400
         )
         coins[coin] = pd.DataFrame(pipeline.to_list())
         coins[coin].columns = ['time', 'low', 'high', 'open', 'close', 'volume']
@@ -26,89 +34,97 @@ def retrieve_data():
     for key in coins:
         columns.append(coins[key]['close'])
 
-    df = pd.concat(columns, axis=1)
-    df.replace(0, np.nan, inplace=True)
+    dataframe = pd.concat(columns, axis=1)
+    dataframe.replace(0, np.nan, inplace=True)
     columns = ['{}_close'.format(key) for key in coins]
     columns.insert(0, 'time')
-    df.columns = columns
+    dataframe.columns = columns
 
-    return df
+    return dataframe
 
-def minimize_variance(weights, cov_matrix):
+def get_min_variance_allocation(weights, cov_matrix):
+    """
+    Minimizes the variance of a portfolio.
+    """
+
     def func(weights):
-        return (np.matmul(np.matmul(weights.transpose(), cov_matrix), weights))
+        """The objective function that minimizes variance."""
+        return np.matmul(np.matmul(weights.transpose(), cov_matrix), weights)
 
     def func_deriv(weights):
+        """The derivative of the objective function."""
         return (
             np.matmul(weights.transpose(), cov_matrix.transpose()) +
             np.matmul(weights.transpose(), cov_matrix)
         )
 
     constraints = ({'type': 'eq', 'fun': lambda weights: (weights.sum() - 1)})
-    b = (0.0, 1.0)
-    bounds = (b, b, b)
-    solution = minimize(
-        fun=func, x0=weights, bounds=bounds, jac=func_deriv,
-        constraints=constraints, method='SLSQP', options={'disp': False}
-    )
-    min_risk = solution.fun
+    solution = solve_minimize(func, weights, constraints, func_deriv)
+    # NOTE: `min_risk` is unused, but may be helpful later.
+    # min_risk = solution.fun
     allocation = solution.x
 
-    return min_risk, allocation
+    return allocation
 
-def maximize_returns(weights, returns):
+def get_max_return(weights, returns):
+    """
+    Maximizes the returns of a portfolio.
+    """
+
     def func(weights):
-        return (np.dot(weights, returns.values)*-1)
+        """The objective function that maximizes returns."""
+        return np.dot(weights, returns.values) * -1
 
     constraints = ({'type': 'eq', 'fun': lambda weights: (weights.sum() - 1)})
-    b = (0.0, 1.0)
-    bounds = (b, b, b)
-    solution = minimize(
-        fun=func, x0=weights, bounds=bounds, jac=False,
-        constraints=constraints, method='SLSQP', options={'disp': False}
-    )
+    solution = solve_minimize(func, weights, constraints)
     max_return = solution.fun * -1
-    allocation = solution.x
 
-    return max_return, allocation
+    # NOTE: `max_risk` is not used anywhere, but may be helpful in the future.
+    # allocation = solution.x
+    # max_risk = np.matmul(
+    #     np.matmul(allocation.transpose(), cov_matrix), allocation
+    # )
 
-def efficient_frontier(returns, cov_matrix, min_return, max_return, num):
-    points = np.linspace(min_return, max_return, num)
-    columns = [coin for coin in supported_coins]
+    return max_return
+
+def efficient_frontier(returns, cov_matrix, min_return, max_return, count):
+    """
+    Returns a DataFrame of efficient portfolio allocations for `count` risk
+    indices.
+    """
+
+    columns = [coin for coin in SUPPORTED_COINS]
     columns.append('return')
     columns.append('risk')
     values = pd.DataFrame(columns=columns)
     weights = [0.25, 0.25, 0.5]
 
-    for point in points:
-        def func(weights):
-            return (
-                np.matmul(np.matmul(weights.transpose(), cov_matrix), weights)
-            )
+    def func(weights):
+        """The objective function that minimizes variance."""
+        return np.matmul(np.matmul(weights.transpose(), cov_matrix), weights)
 
+    def func_deriv(weights):
+        """The derivative of the objective function."""
+        return (
+            np.matmul(weights.transpose(), cov_matrix.transpose()) +
+            np.matmul(weights.transpose(), cov_matrix)
+        )
+
+    for point in np.linspace(min_return, max_return, count):
         constraints = (
             {'type': 'eq', 'fun': lambda weights: (weights.sum() - 1)},
-            {'type': 'ineq', 'fun': lambda weights: (
-                np.dot(weights, returns.values) - point
+            {'type': 'ineq', 'fun': lambda weights, i=point: (
+                np.dot(weights, returns.values) - i
             )}
         )
 
-        def func_deriv(weights):
-            return (
-                np.matmul(weights.transpose(), cov_matrix.transpose()) +
-                np.matmul(weights.transpose(), cov_matrix)
-            )
-
-        b = (0.0, 1.0)
-        bounds = (b, b, b)
-        solution = minimize(
-            fun=func, x0=weights, jac=func_deriv, bounds=bounds,
-            constraints=constraints, method='SLSQP', options={'disp': False}
-        )
+        solution = solve_minimize(func, weights, constraints, func_deriv)
 
         columns = {}
-        for index, coin in enumerate(supported_coins):
+        for index, coin in enumerate(SUPPORTED_COINS):
             columns[coin] = round(solution.x[index], 3)
+
+        # NOTE: These lines could be helpful, but are commented out right now.
         # columns['return'] = round(np.dot(solution.x, returns.values), 6)
         # columns['risk'] = round(solution.fun, 6)
 
@@ -116,40 +132,55 @@ def efficient_frontier(returns, cov_matrix, min_return, max_return, num):
 
     return values
 
-def allocate(risk_index, df=None):
-    if df.empty: df = retrieve_data()
+def solve_minimize(func, weights, constraints, func_deriv=False):
+    """
+    Returns the solution to a minimization problem.
+    """
+
+    bounds = ((0.0, 1.0), (0.0, 1.0), (0.0, 1.0))
+    return minimize(
+        fun=func, x0=weights, jac=func_deriv, bounds=bounds,
+        constraints=constraints, method='SLSQP', options={'disp': False}
+    )
+
+def allocate(risk_index, dataframe=None):
+    """
+    Returns an efficient portfolio allocation for the given risk index.
+    """
+
+    if dataframe.empty:
+        dataframe = retrieve_data()
 
     #==== Calculate the daily changes ====#
     change_columns = []
-    for index, column in enumerate(df):
-        if column is 'time': continue
-        change_column = '{}_change'.format(supported_coins[index-1])
-        df[change_column] = (
-            df[column].shift(-1) - df[column]) / (-df[column].shift(-1)
+    for index, column in enumerate(dataframe):
+        if column == 'time':
+            continue
+        change_column = '{}_change'.format(SUPPORTED_COINS[index - 1])
+        dataframe[change_column] = (
+            (dataframe[column].shift(-1) - dataframe[column]) /
+            -dataframe[column].shift(-1)
         )
         change_columns.append(change_column)
-    df.time = pd.to_datetime(df['time'], unit='s')
-    df.set_index(['time'], inplace=True)
+    dataframe.time = pd.to_datetime(dataframe['time'], unit='s')
+    dataframe.set_index(['time'], inplace=True)
 
     #==== Variances and returns ====#
     columns = change_columns
-    risks = df[columns].apply(np.nanvar, axis=0)
-    returns = df[columns].apply(np.nanmean, axis=0)
+    # NOTE: `risks` is not used, but may be used in the future
+    # risks = dataframe[columns].apply(np.nanvar, axis=0)
+    returns = dataframe[columns].apply(np.nanmean, axis=0)
 
     #==== Calculate risk and expected return ====#
-    cov_matrix = df[columns].cov()
+    cov_matrix = dataframe[columns].cov()
     weights = np.array([.2, .3, .5]).reshape(3, 1)
 
     #==== Calculate portfolio with the minimum risk ====#
-    min_risk, min_risk_allocation = minimize_variance(weights, cov_matrix)
-    min_return = round(np.dot(min_risk_allocation, returns.values), 9)
+    min_variance_allocation = get_min_variance_allocation(weights, cov_matrix)
+    min_return = round(np.dot(min_variance_allocation, returns.values), 9)
 
     #==== Calculate portfolio with the maximum return ====#
-    max_return, max_return_allocation = maximize_returns(weights, returns)
-    max_risk = np.matmul(
-        np.matmul(max_return_allocation.transpose(), cov_matrix),
-        max_return_allocation
-    )
+    max_return = get_max_return(weights, returns)
 
     #==== Calculate efficient frontier ====#
     frontier = efficient_frontier(
