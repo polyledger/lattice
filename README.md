@@ -50,6 +50,20 @@ portfolio.history
 portfolio.get_historical_value('2017-10-01', chart=True)
 ```
 
+**Optimizing portfolio allocations**
+
+```python
+from lattice.optimize import allocate
+
+risk_index = 8
+allocation = allocate(risk_index)
+# =>
+# BTC       0.000
+# ETH       0.378
+# LTC       0.622
+# Name: 9, dtype: float64
+```
+
 ## API Reference
 
 - [lattice.backtest.Portfolio](#latticebacktestportfolio)

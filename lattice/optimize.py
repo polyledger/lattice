@@ -13,7 +13,7 @@ from lattice.data import HistoricRatesPipeline
 
 SUPPORTED_COINS = ['BTC', 'ETH', 'LTC']
 
-def retrieve_data(start='2015-01-01', end='2017-09-01'):
+def retrieve_data(start='2017-01-01', end='2017-09-30'):
     """
     Retrives data for SUPPORTED_COINS as a DataFrame for the given dates.
     """
@@ -27,6 +27,10 @@ def retrieve_data(start='2015-01-01', end='2017-09-01'):
         )
         coins[coin] = pd.DataFrame(pipeline.to_list())
         coins[coin].columns = ['time', 'low', 'high', 'open', 'close', 'volume']
+
+    # print(coins['BTC'].head())
+    # print(coins['ETH'].head())
+    # print(coins['LTC'].head())
 
     #==== Prune the dataframe ====#
     columns = [coins['BTC']['time']]
@@ -94,8 +98,8 @@ def efficient_frontier(returns, cov_matrix, min_return, max_return, count):
     """
 
     columns = [coin for coin in SUPPORTED_COINS]
-    columns.append('return')
-    columns.append('risk')
+    # columns.append('Return')
+    # columns.append('Risk')
     values = pd.DataFrame(columns=columns)
     weights = [0.25, 0.25, 0.5]
 
@@ -125,8 +129,8 @@ def efficient_frontier(returns, cov_matrix, min_return, max_return, count):
             columns[coin] = round(solution.x[index], 3)
 
         # NOTE: These lines could be helpful, but are commented out right now.
-        # columns['return'] = round(np.dot(solution.x, returns.values), 6)
-        # columns['risk'] = round(solution.fun, 6)
+        # columns['Return'] = round(np.dot(solution.x, returns.values), 6)
+        # columns['Risk'] = round(solution.fun, 6)
 
         values = values.append(columns, ignore_index=True)
 
@@ -148,7 +152,7 @@ def allocate(risk_index, dataframe=None):
     Returns an efficient portfolio allocation for the given risk index.
     """
 
-    if dataframe.empty:
+    if not dataframe:
         dataframe = retrieve_data()
 
     #==== Calculate the daily changes ====#
@@ -165,11 +169,16 @@ def allocate(risk_index, dataframe=None):
     dataframe.time = pd.to_datetime(dataframe['time'], unit='s')
     dataframe.set_index(['time'], inplace=True)
 
+    # print(dataframe.head())
+    # print(dataframe.tail())
+
     #==== Variances and returns ====#
     columns = change_columns
     # NOTE: `risks` is not used, but may be used in the future
-    # risks = dataframe[columns].apply(np.nanvar, axis=0)
+    risks = dataframe[columns].apply(np.nanvar, axis=0)
+    # print('\nVariance:\n{}\n'.format(risks))
     returns = dataframe[columns].apply(np.nanmean, axis=0)
+    # print('\nExpected returns:\n{}\n'.format(returns))
 
     #==== Calculate risk and expected return ====#
     cov_matrix = dataframe[columns].cov()
@@ -186,4 +195,4 @@ def allocate(risk_index, dataframe=None):
     frontier = efficient_frontier(
         returns, cov_matrix, min_return, max_return, 10
     )
-    return frontier.loc[risk_index]
+    return frontier.loc[risk_index - 1]
