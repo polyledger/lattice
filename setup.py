@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
   name = 'lattice',
   packages = find_packages(),
-  version = '0.3.2',
+  version = '0.3.3',
   description = 'A cryptocurrency market data utility package',
   author = 'Matthew Rosendin, Farshad Miraftab',
   author_email = 'matthew@polyledger.com, farshad@polyledger.com',

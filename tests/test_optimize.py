@@ -20,7 +20,7 @@ class TestOptimize(unittest.TestCase):
 
     def test_allocate(self):
         """Ensure that the allocations for the given data are optimal."""
-        risk_index = 0
+        risk_index = 1
         data = [
             [1508396400, 4743.94, 389.20, 73.23],
             [1508482800, 4581.98, 384.10, 66.03],

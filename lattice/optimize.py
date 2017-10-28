@@ -147,12 +147,12 @@ def solve_minimize(func, weights, constraints, func_deriv=False):
         constraints=constraints, method='SLSQP', options={'disp': False}
     )
 
-def allocate(risk_index, dataframe=None):
+def allocate(risk_index, dataframe=pd.DataFrame()):
     """
     Returns an efficient portfolio allocation for the given risk index.
     """
 
-    if not dataframe:
+    if dataframe.empty:
         dataframe = retrieve_data()
 
     #==== Calculate the daily changes ====#

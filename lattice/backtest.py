@@ -7,6 +7,8 @@ usage.
 
 from __future__ import print_function
 
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -141,6 +143,7 @@ class Portfolio(object):
             freq='D',
             date_format='%m-%d-%Y',
             chart=False,
+            filename='chart.png',
             silent=False
         ):
         """
@@ -182,7 +185,7 @@ class Portfolio(object):
             axes = time_series.plot(rot=90)
             axes.set_xlabel('Date')
             axes.set_ylabel('Value ($)')
-            plt.show()
+            plt.savefig(filename)
         else:
             dates = time_series.index.strftime(date_format).tolist()
             return {'dates': dates, 'values': values}
