@@ -107,7 +107,7 @@ class Portfolio(object):
 
         # Backdate the portfolio by changing its values temporarily
         backdated_assets = self.assets.copy()
-        for trade in self.history:
+        for trade in list(reversed(self.history)):
             if trade['datetime'] > datetime:
                 backdated_assets[trade['asset']] -= trade['amount']
 

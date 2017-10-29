@@ -73,6 +73,12 @@ class TestPortfolio(unittest.TestCase):
         with self.assertRaises(ValueError):
             portfolio_2.get_value('2015-01-01', 'USD')
 
+        # Test that backdated assets are removed in reverse order
+        portfolio_2 = Portfolio({'USD': 0}, '2017-10-01')
+        portfolio_2.add_asset('USD', 100, '2017-10-28')
+        portfolio_2.trade_asset(0, 'USD', 'BTC', '2017-10-28')
+        portfolio_2.get_historical_value('2017-10-01', '2017-10-28', freq='D')
+
     def test_remove_asset(self):
         """
         Similar to `test_add_asset`, but ensure that you cannot remove an asset
