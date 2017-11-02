@@ -2,6 +2,18 @@
 
 """
 Test the backtest module.
+
+To run tests for this file only, use the following command:
+
+```
+$ python -m unittest tests.test_backtest
+```
+
+You can run a specific test like so:
+
+```
+$ python -m unittest tests.test_backtest.TestPortfolio.test_add_asset
+```
 """
 
 import unittest
@@ -55,18 +67,18 @@ class TestPortfolio(unittest.TestCase):
 
         # The prices at the given dates are accurate.
         portfolio_2.add_asset('BTC', 50, '2017-01-01')
-        self.assertEqual(portfolio_2.get_value('2017-01-01'), 58513.5)
+        self.assertEqual(portfolio_2.get_value('2017-01-01'), 59772.0)
         portfolio_2.add_asset('ETH', 50, '2017-01-01')
-        self.assertEqual(portfolio_2.get_value('2017-01-01'), 58927.0)
+        self.assertEqual(portfolio_2.get_value('2017-01-01'), 60179.0)
         portfolio_2.add_asset('LTC', 50, '2017-05-01')
-        self.assertEqual(portfolio_2.get_value('2017-05-01'), 84041.0)
+        self.assertEqual(portfolio_2.get_value('2017-05-01'), 85454.0)
 
         # Ensure that the value before adding BTC, ETH, and LTC is the original
         # 10000 USD
         self.assertEqual(portfolio_2.get_value('2016-01-01'), 10000)
 
         # Ensure that getting the value of a single asset works
-        self.assertEqual(portfolio_2.get_value('2017-01-01', 'BTC'), 48513.5)
+        self.assertEqual(portfolio_2.get_value('2017-01-01', 'BTC'), 49772.0)
 
         # If you try getting the value of an asset that doesn't exist in the
         # portfolio at the given time, ensure it raises an error
@@ -116,7 +128,7 @@ class TestPortfolio(unittest.TestCase):
         portfolio_5 = Portfolio()
         portfolio_5.add_asset('BTC', 20, '2016-01-01')
         historical_value = portfolio_5.get_historical_value(
-            '2016-01-01', '2017-01-01', freq='W', silent=True
+            '2016-01-01', '2017-01-01', freq='W'
         )
         self.assertTrue(len(historical_value['dates']) <= 22)
         self.assertTrue(len(historical_value['values']) <= 22)

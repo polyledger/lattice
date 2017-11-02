@@ -9,22 +9,9 @@ import time
 import dateutil.parser
 
 
-class Color: # pylint: disable=too-few-public-methods
-    """Terminal output color codes."""
-    PURPLE = '\033[95m'
-    CYAN = '\033[96m'
-    DARKCYAN = '\033[36m'
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-    END = '\033[0m'
-
-def current_datetime_string():
+def current_date_string():
     """Returns a current datetime string"""
-    return str(datetime.datetime.now())
+    return str(datetime.datetime.now().date())
 
 def date_string_to_datetime(dstring):
     """Converts a date to a datetime object"""
