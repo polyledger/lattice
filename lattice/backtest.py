@@ -184,6 +184,10 @@ class Portfolio(object):
         :param datetime: datetime string indicating the time the asset was
                          traded
         """
-        price = get_price(to_asset, datetime)
+
+        if to_asset == 'USD':
+            price = 1/get_price(from_asset, datetime)
+        else:
+            price = get_price(to_asset, datetime)
         self.remove_asset(from_asset, amount, datetime)
-        self.add_asset(to_asset, amount * price, datetime)
+        self.add_asset(to_asset, amount * 1/price, datetime)
