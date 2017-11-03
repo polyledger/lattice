@@ -16,7 +16,7 @@ from lattice.data import get_historic_data, get_price
 SUPPORTED_COINS = ['BTC', 'ETH', 'BCH', 'XRP', 'LTC', 'XMR', 'ZEC', 'DASH',
             'ETC', 'NEO']
 
-def retrieve_data(start='2017-10-01', end=util.current_date_string()):
+def retrieve_data(start, end):
     """
     Retrives data as a DataFrame.
     """
@@ -128,12 +128,12 @@ def solve_minimize(func, weights, constraints, lower_bound=0.0, upper_bound=1.0,
         constraints=constraints, method='SLSQP', options={'disp': False}
     )
 
-def allocate():
+def allocate(start='2017-10-01', end=util.current_date_string()):
     """
     Returns an efficient portfolio allocation for the given risk index.
     """
 
-    dataframe = retrieve_data()
+    dataframe = retrieve_data(start, end)
 
     #==== Calculate the daily changes ====#
     change_columns = []
@@ -171,6 +171,6 @@ def allocate():
 
     #==== Calculate efficient frontier ====#
     frontier = efficient_frontier(
-        returns, cov_matrix, min_return, max_return, 10
+        returns, cov_matrix, min_return, max_return, 6
     )
     return frontier
