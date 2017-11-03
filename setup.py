@@ -19,5 +19,4 @@ setup(
     'numpy'
   ],
   classifiers = [],
-  include_package_data=True,
 )
