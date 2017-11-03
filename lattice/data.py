@@ -18,8 +18,7 @@ coins = ['BTC', 'ETH', 'BCH', 'XRP', 'LTC', 'XMR', 'ZEC', 'DASH', 'ETC', 'NEO']
 
 filepath = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
-    '..',
-    'data/day_historical.csv'
+    'datasets/day_historical.csv'
 )
 
 def request_from_cryptocompare():
