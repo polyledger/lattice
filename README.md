@@ -34,6 +34,32 @@ portfolio.history
 
 # View a chart of the historical value
 portfolio.get_historical_value('2017-10-01', chart=True)
+
+# Get portfolio value of all 10 portfolios for a portfolio created at the start of October
+from lattice.backtest import Portfolio
+from lattice.optimize import allocate
+
+def polyledger_portfolio_values(since):
+    allocations = allocate()
+    for index, allocation in allocations.iterrows():
+        p = Portfolio({'USD': 10000}, since)
+        for coin in allocation.keys():
+            p.trade_asset(allocation[coin] * 10000, 'USD', coin, since)
+        print(p.get_value())
+
+# Compare to Bitwise
+def bitwise_portfolio_value(since):
+  p = Portfolio({'USD': 10000}, since)
+  bitwise_alloc = {
+    'BTC': 0.6815, 'ETH': 0.1445, 'BCH': 0.0568, 'XRP': 0.0481, 'LTC': 0.0194,
+    'DASH': 0.0147, 'ZEC': 0.0141, 'XMR': 0.0077, 'ETC': 0.0069, 'NEO': 0.0062
+  }
+  for coin, percent in bitwise_alloc.items():
+      p.trade_asset(percent * 10000, 'USD', coin, since)
+  print(p.get_value())
+
+polyledger_portfolio_values('2017-10-01')
+bitwise_portfolio_value('2017-10-01')
 ```
 
 **Optimizing portfolio allocations**
@@ -41,8 +67,9 @@ portfolio.get_historical_value('2017-10-01', chart=True)
 ```python
 from lattice.optimize import allocate
 
-risk_index = 8
-allocation = allocate(risk_index)
+allocations = allocate()
+risk_index = 5 # Risk indexes are from 1 to 10
+allocations.loc[risk_index - 1]
 ```
 
 ## Development

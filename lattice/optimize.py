@@ -4,6 +4,7 @@
 This module creates optimal portfolio allocations, given a risk index.
 """
 
+import math
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
@@ -15,7 +16,7 @@ from lattice.data import get_historic_data, get_price
 SUPPORTED_COINS = ['BTC', 'ETH', 'BCH', 'XRP', 'LTC', 'XMR', 'ZEC', 'DASH',
             'ETC', 'NEO']
 
-def retrieve_data(start='2017-01-01', end=util.current_date_string()):
+def retrieve_data(start='2017-10-01', end=util.current_date_string()):
     """
     Retrives data as a DataFrame.
     """
@@ -106,7 +107,7 @@ def efficient_frontier(returns, cov_matrix, min_return, max_return, count):
 
         columns = {}
         for index, coin in enumerate(SUPPORTED_COINS):
-            columns[coin] = round(solution.x[index], 3)
+            columns[coin] = math.floor(solution.x[index] * 100) / 100.0
 
         # NOTE: These lines could be helpful, but are commented out right now.
         # columns['Return'] = round(np.dot(solution.x, returns.values), 6)
@@ -127,7 +128,7 @@ def solve_minimize(func, weights, constraints, lower_bound=0.0, upper_bound=1.0,
         constraints=constraints, method='SLSQP', options={'disp': False}
     )
 
-def allocate(risk_index):
+def allocate():
     """
     Returns an efficient portfolio allocation for the given risk index.
     """
@@ -172,4 +173,4 @@ def allocate(risk_index):
     frontier = efficient_frontier(
         returns, cov_matrix, min_return, max_return, 10
     )
-    return frontier.loc[risk_index - 1]
+    return frontier

@@ -21,8 +21,9 @@ class TestOptimize(unittest.TestCase):
 
     def test_allocate(self):
         """Ensure that the allocations for the given data are optimal."""
+        allocations = allocate()
         risk_index = 1
-        allocation = allocate(risk_index)
+        allocations.loc[risk_index - 1]
 
 if __name__ == '__main__':
     unittest.main()
