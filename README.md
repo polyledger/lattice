@@ -2,6 +2,8 @@
 
 > A cryptocurrency portfolio analytics Python package
 
+[![Maintainability](https://api.codeclimate.com/v1/badges/ab47790d1135959e03eb/maintainability)](https://codeclimate.com/repos/59efa550adedb802cc000014/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/ab47790d1135959e03eb/test_coverage)](https://codeclimate.com/repos/59efa550adedb802cc000014/test_coverage)
+
 ## Usage
 
 **Backtesting trading strategies**
