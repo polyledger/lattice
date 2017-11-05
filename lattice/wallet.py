@@ -50,17 +50,16 @@ class secp256k1(object):
         Use the Extended Euclidean Algorithm:
         https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
         """
+        if N == 0:
+            return 0
+        lm, hm = 1, 0
+        low, high = N % self.P, self.P
+        while low > 1:
+            r = high//low
+            nm, new = hm - lm * r, high - low * r
+            lm, low, hm, high = nm, new, lm, low
 
-        C, D = N, self.P
-        X1, X2, Y1, Y2 = 1, 0, 0, 1
-
-        while C != 0:
-            Q, C, D = divmod(D, C) + (C,)
-            X1, X2 = X2, X1 - Q * X2
-            Y1, Y2 = Y2, Y1 - Q * Y2
-
-        if N == 1:
-            return X1 % self.P
+        return lm % self.P
 
     def is_on_curve(self, point):
         """
@@ -249,6 +248,7 @@ class AffinePoint(secp256k1):
         super().__init__()
         self.X = X
         self.Y = Y
+        self.infinity = infinity
 
     def __add__(self, other):
         X1, Y1 = self.X, self.Y
@@ -278,8 +278,20 @@ class AffinePoint(secp256k1):
     def __ne__(self, other):
         return not (self == other)
 
-    def __mul__(self):
-        raise NotImplementedError()
+    def __mul__(self, other):
+        """
+        Implements the scalar multiplication via the Montgomery ladder tech-
+        nique.
+        """
+        r0 = AffinePoint(0, 0, True)
+        r = [r0, self]
+
+        for i in reversed(range(other.bit_length())):
+            di = (other >> i) & 0x1
+            r[(di + 1) % 2] = r[0] + r[1]
+            r[di] = r[di].double()
+
+        return r[0]
 
     def __repr__(self):
         return '<AffinePoint (%s, %s)>' % (self.X, self.Y)
@@ -303,8 +315,8 @@ class AffinePoint(secp256k1):
             return self
 
         S = ((3 * X1 ** 2 + a) * self.inverse(2 * Y1)) % P
-        X2 = (S ** 2 - (2 * X)) % P
-        Y2 = (S * (X - X2) - Y1) % P
+        X2 = (S ** 2 - (2 * X1)) % P
+        Y2 = (S * (X1 - X2) - Y1) % P
         return AffinePoint(X2, Y2)
 
     def slope(self, other):

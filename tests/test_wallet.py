@@ -35,12 +35,23 @@ class TestJacobianPoint(unittest.TestCase):
     def test_jacobian_point(self):
         Gx = 10
         Gy = 15
-        G = (Gx, Gy)
         X, Y, Z = Gx, Gy, 1
         j = JacobianPoint(X, Y, Z)
         j.double()
-        j.inverse(G[1])
+        j.inverse(X)
         j * 5
+
+class TestAffinePoint(unittest.TestCase):
+    """Tests the affine point class."""
+
+    def test_affine_point(self):
+        Gx = 10
+        Gy = 15
+        X, Y = Gx, Gy
+        p = AffinePoint(X, Y)
+        p.double()
+        p.inverse(X)
+        p * 5
 
 if __name__ == '__main__':
     unittest.main()
