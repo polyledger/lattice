@@ -179,7 +179,7 @@ class JacobianPoint(secp256k1):
         X3 = (R ** 2 - H ** 3 - 2 * U1 * H ** 2) % self.P
         Y3 = (R * (U1 * H ** 2 - X3) - S1 * H ** 3) % self.P
         Z3 = H * Z1 * Z2
-        return JacobianPoint((X3, Y3, Z3))
+        return JacobianPoint(X3, Y3, Z3)
 
     def __mul__(self, S):
         X1, Y1, Z1 = self.X, self.Y, self.Z
@@ -194,7 +194,7 @@ class JacobianPoint(secp256k1):
             point = AffinePoint(*self.G).to_jacobian() * (S//2)
             return point.double()
         elif (S % 2) == 1:
-            point = AffinePoint(*self.G).to_jacobian() * (S//2)
+            point = AffinePoint(*self.G).to_jacobian() * (S//2) + AffinePoint(*self.G).to_jacobian()
             return point.double()
 
     def __repr__(self):
