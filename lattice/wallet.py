@@ -9,82 +9,114 @@ import hashlib
 import binascii
 
 
-"""
-Elliptic curve parameters (secp256k1)
-See https://en.bitcoin.it/wiki/Secp256k1
-
-The curve E: y^2 = x^3 + ax + b over Fp
-
-P is the characteristic of the finite field
-G is the base (or generator) point
-N is a prime number, called the order (number of points in E(Fp))
-H is the cofactor
-
-Hexadecimal representations:
-  P = FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FFFFFC2F
-  A = 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
-  B = 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000007
-  G = 02 79BE667E F9DCBBAC 55A06295 CE870B07 029BFCDB 2DCE28D9 59F2815B 16F81798
-  N = FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C D0364141
-  H = 01
-"""
-P = 2 ** 256 - 2 ** 32 - 2 ** 9 - 2 ** 8 - 2 ** 7 - 2 ** 6 - 2 ** 4 - 1
-a = 0
-b = 7
-Gx = 55066263022277343669578718895168534326250603453777594175500187360389116729240
-Gy = 32670510020758816978083085130507043184471273380659243275938904335757337482424
-G = (Gx, Gy)
-n = 115792089237316195423570985008687907852837564279074904382605163141518161494337
-
-def generate_private_key(password):
+class secp256k1(object):
     """
-    Generates a private key based on the password.
+    Elliptic curve with Secp256k1 standard parameters
+    See https://en.bitcoin.it/wiki/Secp256k1
 
-    SHA-256 is a member of the SHA-2 cryptographic hash functions designed by
-    the NSA. SHA stands for Secure Hash Algorithm. The password is converted
-    to bytes and hashed with SHA-256. The binary output is converted to a hex
-    representation.
+    This is the curve E: y^2 = x^3 + ax + b over Fp
 
-    Args:
-        data (str): The data to be hashed with SHA-256.
-
-    Returns:
-        bytes: The hexadecimal representation of the hashed binary data.
+    P is the characteristic of the finite field
+    G is the base (or generator) point
+    N is a prime number, called the order (number of points in E(Fp))
+    H is the cofactor
     """
-    binary_data = bytes(password, 'utf-8')
-    hash_object = hashlib.sha256(binary_data)
-    message_digest_bin = hash_object.digest()
-    message_digest_hex = binascii.hexlify(message_digest_bin)
-    return message_digest_hex
 
-def generate_public_key(private_key):
-    """
-    Generates a public key from the hex-encoded private key using elliptic
-    curve cryptography. The private key is multiplied by a predetermined point
-    on the elliptic curve called the generator point, G, resulting in the
-    corresponding private key. The generator point is always the same for all
-    Bitcoin users.
+    def __init__(self):
+        self.P = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f
+        self.a = 0
+        self.b = 7
+        self.N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
+        self.Gx = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
+        self.Gy = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
+        self.G = (self.Gx, self.Gy)
+        self.H = 1
 
-    Jacobian coordinates are used to represent the elliptic curve point G.
-    https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates
+    def is_on_curve(self, point):
+        """
+        Checks whether a point is on the curve.
 
-    The exponentiating by squaring (also known by double-and-add) method is
-    used for the elliptic curve multiplication that results in the public key.
-    https://en.wikipedia.org/wiki/Exponentiation_by_squaring
+        Args:
+            point (AffinePoint): Point to be checked.
 
-    Args:
-        private_key (bytes): UTF-8 encoded hexadecimal
-    Returns:
+        Returns:
+            bool: True if point is on the curve, False otherwise.
+        """
+        X, Y = point.X, point.Y
+        return (
+                pow(Y, 2, self.P) - pow(X, 3, self.P) - self.A * X - self.B
+            ) % self.P == 0
 
-    """
-    private_key = int(private_key, 16)
-    if private_key >= n:
-        raise Exception('Invalid private key.')
+    @property
+    def base_point(self):
+        """
+        Returns the base point for this curve.
 
-    G = JacobianPoint(Gx, Gy, 1)
-    public_key = G * private_key
+        Returns:
+            JacobianPoint: The base point.
+        """
+        return JacobianPoint(self, self.Gx, self.Gy)
 
-class JacobianPoint(object):
+
+class Wallet(secp256k1):
+
+    def __init__(self):
+        super().__init__()
+        self.private_key = self.generate_private_key()
+        self.public_key = self.generate_public_key()
+
+    def generate_private_key(self):
+        """
+        Generates a private key based on the password.
+
+        SHA-256 is a member of the SHA-2 cryptographic hash functions designed by
+        the NSA. SHA stands for Secure Hash Algorithm. The password is converted
+        to bytes and hashed with SHA-256. The binary output is converted to a hex
+        representation.
+
+        Args:
+            data (str): The data to be hashed with SHA-256.
+
+        Returns:
+            bytes: The hexadecimal representation of the hashed binary data.
+        """
+        # TODO: Use a random seed instead of a password.
+        password = 'test'
+        binary_data = bytes(password, 'utf-8')
+        hash_object = hashlib.sha256(binary_data)
+        message_digest_bin = hash_object.digest()
+        message_digest_hex = binascii.hexlify(message_digest_bin)
+        return message_digest_hex
+
+    def generate_public_key(self):
+        """
+        Generates a public key from the hex-encoded private key using elliptic
+        curve cryptography. The private key is multiplied by a predetermined point
+        on the elliptic curve called the generator point, G, resulting in the
+        corresponding private key. The generator point is always the same for all
+        Bitcoin users.
+
+        Jacobian coordinates are used to represent the elliptic curve point G.
+        https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates
+
+        The exponentiating by squaring (also known by double-and-add) method is
+        used for the elliptic curve multiplication that results in the public key.
+        https://en.wikipedia.org/wiki/Exponentiation_by_squaring
+
+        Args:
+            private_key (bytes): UTF-8 encoded hexadecimal
+        Returns:
+
+        """
+        private_key = int(self.private_key, 16)
+        if private_key >= self.N:
+            raise Exception('Invalid private key.')
+
+        G = JacobianPoint(self.Gx, self.Gy, 1)
+        public_key = G * private_key
+        return public_key
+
+class JacobianPoint(secp256k1):
     """
     Defines a Jacobian coordinate system point and operations that can be
     performed. Algorithms defined in this link:
@@ -94,6 +126,7 @@ class JacobianPoint(object):
     POINT_AT_INFINITY = (1, 1, 0)
 
     def __init__(self, X, Y, Z):
+        super().__init__()
         self.X = X
         self.Y = Y
         self.Z = Z
@@ -101,10 +134,10 @@ class JacobianPoint(object):
     def __add__(self, other):
         X1, Y1, Z1 = self.X, self.Y, self.Z
         X2, Y2, Z2 = other.X, other.Y, other.Z
-        U1 = (X1 * Z2 ** 2) % P
-        U2 = (X2 * Z1 ** 2) % P
-        S1 = (Y1 * Z2 ** 3) % P
-        S2 = (Y2 * Z1 ** 3) % P
+        U1 = (X1 * Z2 ** 2) % self.P
+        U2 = (X2 * Z1 ** 2) % self.P
+        S1 = (Y1 * Z2 ** 3) % self.P
+        S2 = (Y2 * Z1 ** 3) % self.P
         if U1 == U2:
             if S1 != S2:
                 return POINT_AT_INFINITY
@@ -112,43 +145,43 @@ class JacobianPoint(object):
                 return self.double((X1, Y1, Z1))
         H = U2 - U1
         R = S2 - S1
-        X3 = (R ** 2 - H ** 3 - 2 * U1 * H ** 2) % P
-        Y3 = (R * (U1 * H ** 2 - X3) - S1 * H ** 3) % P
+        X3 = (R ** 2 - H ** 3 - 2 * U1 * H ** 2) % self.P
+        Y3 = (R * (U1 * H ** 2 - X3) - S1 * H ** 3) % self.P
         Z3 = H * Z1 * Z2
         return JacobianPoint((X3, Y3, Z3))
 
-    def __mul__(self, N):
+    def __mul__(self, S):
         X1, Y1, Z1 = self.X, self.Y, self.Z
 
-        if Y1 == 0 or P == 0:
+        if Y1 == 0 or self.P == 0:
             return JacobianPoint(0, 0, 1)
-        elif N == 1:
+        elif S == 1:
             return JacobianPoint(X1, Y1, Z1)
-        elif N < 0 or N >= n:
-            return self * N % n
-        elif (N % 2) == 0:
-            return JacobianPoint.double(AffinePoint(*G).to_jacobian() * (N//2))
-        elif (N % 2) == 1:
-            return JacobianPoint.double(AffinePoint(*G).to_jacobian() * (N//2))
+        elif S < 0 or S >= self.N:
+            return self * S % self.N
+        elif (S % 2) == 0:
+            point = AffinePoint(*self.G).to_jacobian() * (S//2)
+            return point.double()
+        elif (S % 2) == 1:
+            point = AffinePoint(*self.G).to_jacobian() * (S//2)
+            return point.double()
 
     def __repr__(self):
         return "<JacobianPoint (%s, %s, %s)>" %(self.X, self.Y, self.Z)
 
-    @staticmethod
-    def double(point):
-        X1, Y1, Z1 = point.X, point.Y, point.Z
+    def double(self):
+        X1, Y1, Z1 = self.X, self.Y, self.Z
 
         if Y1 == 0:
             return POINT_AT_INFINITY
-        S = (4 * X1 * Y1 ** 2) % P
-        M = (3 * X1 ** 2 + a * Z1 ** 4) % P
-        X3 = (M ** 2 - 2 * S) % P
-        Y3 = (M * (S - X3) - 8 * Y1 ** 4) % P
-        Z3 = (2 * Y1 * Z1) % P
+        S = (4 * X1 * Y1 ** 2) % self.P
+        M = (3 * X1 ** 2 + self.a * Z1 ** 4) % self.P
+        X3 = (M ** 2 - 2 * S) % self.P
+        Y3 = (M * (S - X3) - 8 * Y1 ** 4) % self.P
+        Z3 = (2 * Y1 * Z1) % self.P
         return JacobianPoint(X3, Y3, Z3)
 
-    @staticmethod
-    def inverse(N, P):
+    def inverse(self, N):
         """
         Returns the modular inverse of an integer with respect to the field
         characteristic, P.
@@ -157,7 +190,7 @@ class JacobianPoint(object):
         https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
         """
 
-        C, D = N, P
+        C, D = N, self.P
         X1, X2, Y1, Y2 = 1, 0, 0, 1
 
         while C != 0:
@@ -166,10 +199,10 @@ class JacobianPoint(object):
             Y1, Y2 = Y2, Y1 - Q * Y2
 
         if N == 1:
-            return X1 % P
+            return X1 % self.P
 
     def to_affine(self):
-        X, Y, Z = self.x, self.y, self.inverse(self.z, P)
+        X, Y, Z = self.x, self.y, self.inverse(self.z)
         return ((X * Z ** 2) % P, (Y * Z ** 3) % P)
 
 class AffinePoint(object):

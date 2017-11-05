@@ -23,28 +23,29 @@ class TestWallet(unittest.TestCase):
     """Test the wallet class."""
 
     def test_generate_private_key(self):
+        wallet = Wallet()
         password = 'password'
-        private_key = generate_private_key(password)
+        private_key = wallet.generate_private_key()
 
         self.assertEqual(len(private_key), 64)
 
     def test_generate_public_key(self):
+        wallet = Wallet()
         password = 'password'
-        private_key = generate_private_key(password)
-        public_key = generate_public_key(private_key)
+        private_key = wallet.generate_private_key()
+        public_key = wallet.generate_public_key()
 
 class TestJacobianPoint(unittest.TestCase):
     """Test the jacobian point class."""
 
-    Gx = 10
-    Gy = 15
-    G = (Gx, Gy)
-
     def test_jacobian_point(self):
+        Gx = 10
+        Gy = 15
+        G = (Gx, Gy)
         X, Y, Z = Gx, Gy, 1
         j = JacobianPoint(X, Y, Z)
-        JacobianPoint.double(j)
-        j.inverse(G[1], P)
+        j.double()
+        j.inverse(G[1])
         j * 5
 
 if __name__ == '__main__':
