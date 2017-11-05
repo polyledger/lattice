@@ -9,15 +9,32 @@ import hashlib
 import binascii
 
 
-# Elliptic curve parameters (secp256k1)
-# See https://en.bitcoin.it/wiki/Secp256k1
-P = 2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 - 1
-A = 0
-B = 7
+"""
+Elliptic curve parameters (secp256k1)
+See https://en.bitcoin.it/wiki/Secp256k1
+
+The curve E: y^2 = x^3 + ax + b over Fp
+
+P is the characteristic of the finite field
+G is the base (or generator) point
+N is a prime number, called the order (number of points in E(Fp))
+H is the cofactor
+
+Hexadecimal representations:
+  P = FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FFFFFC2F
+  A = 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+  B = 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000007
+  G = 02 79BE667E F9DCBBAC 55A06295 CE870B07 029BFCDB 2DCE28D9 59F2815B 16F81798
+  N = FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C D0364141
+  H = 01
+"""
+P = 2 ** 256 - 2 ** 32 - 2 ** 9 - 2 ** 8 - 2 ** 7 - 2 ** 6 - 2 ** 4 - 1
+a = 0
+b = 7
 Gx = 55066263022277343669578718895168534326250603453777594175500187360389116729240
 Gy = 32670510020758816978083085130507043184471273380659243275938904335757337482424
 G = (Gx, Gy)
-N = 115792089237316195423570985008687907852837564279074904382605163141518161494337
+n = 115792089237316195423570985008687907852837564279074904382605163141518161494337
 
 def generate_private_key(password):
     """
@@ -60,137 +77,106 @@ def generate_public_key(private_key):
     Returns:
 
     """
-    private_key_int = int(private_key, 16)
-    if private_key_int >= N:
+    private_key = int(private_key, 16)
+    if private_key >= n:
         raise Exception('Invalid private key.')
 
-    # Converting (x, y) to the Jacobian coordinates (x, y, z)
-    G_jacobian_coords = (G[0], G[1], 1)
-
-    def jacobian_double(point):
-        x, y, z = point
-        if not y:
-            return (0, 0, 0)
-        ysq = (y ** 2) % P
-        S = (4 * x * ysq) % P
-        M = (3 * x ** 2 + A * z ** 4) % P
-        x_prime = (M ** 2 - 2 * S) % P
-        y_prime = (M * (S - x_prime) - 8 * ysq ** 2) % P
-        z_prime = (2 * y * z) % P
-        return (x_prime, y_prime, z_prime)
-
-    def jacobian_add(p, q):
-        if not p[1]:
-            return q
-        if not q[1]:
-            return p
-        U1 = (p[0] * q[2] ** 2) % P
-        U2 = (q[0] * p[2] ** 2) % P
-        S1 = (p[1] * q[2] ** 3) % P
-        S2 = (q[1] * p[2] ** 3) % P
-        if U1 == U2:
-            if S1 != S2:
-                return (0, 0, 1)
-            return jacobian_double(p)
-        H = U2 - U1
-        R = S2 - S1
-        H2 = (H * H) % P
-        H3 = (H * H2) % P
-        U1H2 = (U1 * H2) % P
-        nx = (R ** 2 - H3 - 2 * U1H2) % P
-        ny = (R * (U1H2 - nx) - S1 * H3) % P
-        nz = (H * p[2] * q[2]) % P
-        return (nx, ny, nz)
-
-    def jacobian_multiply(a, n):
-        if a[1] == 0 or n == 0:
-            return (0, 0, 1)
-        if n == 1:
-            return a
-        if n < 0 or n >= N:
-            return jacobian_multiply(a, n % N)
-        if (n % 2) == 0:
-            return jacobian_double(jacobian_multiply(a, n//2))
-        if (n % 2) == 1:
-            return jacobian_add(jacobian_double(jacobian_multiply(a, n//2)), a)
-
-    def inv(a, n):
-        if a == 0:
-            return 0
-        lm, hm = 1, 0
-        low, high = a % n, n
-        while low > 1:
-            r = high//low
-            nm, new = hm-lm*r, high-low*r
-            lm, low, hm, high = nm, new, lm, low
-        return lm % n
-
-    def from_jacobian(p):
-        z = inv(p[2], P)
-        return ((p[0] * z**2) % P, (p[1] * z**3) % P)
-
-    def encode(val, base, minlen=0):
-        base, minlen = int(base), int(minlen)
-        code_string = '0123456789abcdef'
-        result_bytes = bytes()
-        while val > 0:
-            curcode = code_string[val % base]
-            result_bytes = bytes([ord(curcode)]) + result_bytes
-            val //= base
-
-        pad_size = minlen - len(result_bytes)
-
-        padding_element = b'\x00' if base == 256 else b'1' \
-            if base == 58 else b'0'
-        if (pad_size > 0):
-            result_bytes = padding_element*pad_size + result_bytes
-
-        result_string = ''.join([chr(y) for y in result_bytes])
-        result = result_bytes if base == 256 else result_string
-
-        return result
-
-    def encode_public_key(pub):
-        return '04' + encode(pub[0], 16, 64) + encode(pub[1], 16, 64)
-
-    public_key = encode_public_key(
-        from_jacobian(
-            jacobian_multiply(
-                G_jacobian_coords, private_key_int
-            )
-        )
-    )
-    print(public_key)
+    G = JacobianPoint(Gx, Gy, 1)
+    public_key = G * private_key
 
 class JacobianPoint(object):
     """
     Defines a Jacobian coordinate system point and operations that can be
-    performed.
+    performed. Algorithms defined in this link:
     https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates
     """
 
-    def __init__(self, x, y, z, curve):
-        self.x = x
-        self.y = y
-        self.z = z
+    POINT_AT_INFINITY = (1, 1, 0)
+
+    def __init__(self, X, Y, Z):
+        self.X = X
+        self.Y = Y
+        self.Z = Z
 
     def __add__(self, other):
-        raise NotImplementedError()
+        X1, Y1, Z1 = self.X, self.Y, self.Z
+        X2, Y2, Z2 = other.X, other.Y, other.Z
+        U1 = (X1 * Z2 ** 2) % P
+        U2 = (X2 * Z1 ** 2) % P
+        S1 = (Y1 * Z2 ** 3) % P
+        S2 = (Y2 * Z1 ** 3) % P
+        if U1 == U2:
+            if S1 != S2:
+                return POINT_AT_INFINITY
+            else:
+                return self.double((X1, Y1, Z1))
+        H = U2 - U1
+        R = S2 - S1
+        X3 = (R ** 2 - H ** 3 - 2 * U1 * H ** 2) % P
+        Y3 = (R * (U1 * H ** 2 - X3) - S1 * H ** 3) % P
+        Z3 = H * Z1 * Z2
+        return JacobianPoint((X3, Y3, Z3))
+
+    def __mul__(self, N):
+        X1, Y1, Z1 = self.X, self.Y, self.Z
+
+        if Y1 == 0 or P == 0:
+            return JacobianPoint(0, 0, 1)
+        elif N == 1:
+            return JacobianPoint(X1, Y1, Z1)
+        elif N < 0 or N >= n:
+            return self * N % n
+        elif (N % 2) == 0:
+            return JacobianPoint.double(AffinePoint(*G).to_jacobian() * (N//2))
+        elif (N % 2) == 1:
+            return JacobianPoint.double(AffinePoint(*G).to_jacobian() * (N//2))
 
     def __repr__(self):
-        return "<JacobianPoint (%s, %s, %s)>" %(self.x, self.y, self.z)
+        return "<JacobianPoint (%s, %s, %s)>" %(self.X, self.Y, self.Z)
+
+    @staticmethod
+    def double(point):
+        X1, Y1, Z1 = point.X, point.Y, point.Z
+
+        if Y1 == 0:
+            return POINT_AT_INFINITY
+        S = (4 * X1 * Y1 ** 2) % P
+        M = (3 * X1 ** 2 + a * Z1 ** 4) % P
+        X3 = (M ** 2 - 2 * S) % P
+        Y3 = (M * (S - X3) - 8 * Y1 ** 4) % P
+        Z3 = (2 * Y1 * Z1) % P
+        return JacobianPoint(X3, Y3, Z3)
+
+    @staticmethod
+    def inverse(N, P):
+        """
+        Returns the modular inverse of an integer with respect to the field
+        characteristic, P.
+
+        Use the Extended Euclidean Algorithm:
+        https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
+        """
+
+        C, D = N, P
+        X1, X2, Y1, Y2 = 1, 0, 0, 1
+
+        while C != 0:
+            Q, C, D = divmod(D, C) + (C,)
+            X1, X2 = X2, X1 - Q * X2
+            Y1, Y2 = Y2, Y1 - Q * Y2
+
+        if N == 1:
+            return X1 % P
 
     def to_affine(self):
-        raise NotImplementedError()
-
-    def double(self):
-        raise NotImplementedError()
+        X, Y, Z = self.x, self.y, self.inverse(self.z, P)
+        return ((X * Z ** 2) % P, (Y * Z ** 3) % P)
 
 class AffinePoint(object):
 
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    def __init__(self, X, Y):
+        self.X = X
+        self.Y = Y
 
     def __add__(self):
         raise NotImplementedError()
@@ -198,7 +184,7 @@ class AffinePoint(object):
     def __eq__(self, other):
         if not isinstance(other, AffinePoint):
             return False
-        return self.x == other.x and self.y == other.y
+        return self.X == other.X and self.X == other.Y
 
     def __ne__(self, other):
         return not (self == other)
@@ -207,12 +193,12 @@ class AffinePoint(object):
         raise NotImplementedError()
 
     def __repr__(self):
-        return "<AffinePoint (%s, %s)>" % (self.x, self.y)
+        return "<AffinePoint (%s, %s)>" % (self.X, self.Y)
 
     def double(self):
         raise NotImplementedError()
 
     def to_jacobian(self):
         if not self:
-            return JacobianPoint(x=0, y=0, z=0)
-        return JacobianPoint(x=self.x, y=self.y, z=1)
+            return JacobianPoint(X=0, Y=0, Z=0)
+        return JacobianPoint(X=self.X, Y=self.Y, Z=1)
