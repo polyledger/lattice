@@ -7,7 +7,6 @@ This module allows the creation of wallets for various native cryptos.
 from __future__ import print_function
 import hashlib
 import binascii
-import struct
 
 
 class secp256k1(object):
