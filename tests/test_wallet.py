@@ -22,17 +22,11 @@ from lattice.wallet import *
 class TestWallet(unittest.TestCase):
     """Test the wallet class."""
 
-    def test_generate_private_key(self):
+    def test_wallet(self):
         wallet = Wallet()
         password = 'password'
         private_key = wallet.generate_private_key()
-
         self.assertEqual(len(private_key), 64)
-
-    def test_generate_public_key(self):
-        wallet = Wallet()
-        password = 'password'
-        private_key = wallet.generate_private_key()
         public_key = wallet.generate_public_key()
 
 class TestJacobianPoint(unittest.TestCase):

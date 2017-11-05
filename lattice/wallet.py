@@ -32,6 +32,36 @@ class secp256k1(object):
         self.G = (self.Gx, self.Gy)
         self.H = 1
 
+    @property
+    def base_point(self):
+        """
+        Returns the base point for this curve.
+
+        Returns:
+            JacobianPoint: The base point.
+        """
+        return JacobianPoint(self, self.Gx, self.Gy)
+
+    def inverse(self, N):
+        """
+        Returns the modular inverse of an integer with respect to the field
+        characteristic, P.
+
+        Use the Extended Euclidean Algorithm:
+        https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
+        """
+
+        C, D = N, self.P
+        X1, X2, Y1, Y2 = 1, 0, 0, 1
+
+        while C != 0:
+            Q, C, D = divmod(D, C) + (C,)
+            X1, X2 = X2, X1 - Q * X2
+            Y1, Y2 = Y2, Y1 - Q * Y2
+
+        if N == 1:
+            return X1 % self.P
+
     def is_on_curve(self, point):
         """
         Checks whether a point is on the curve.
@@ -44,21 +74,14 @@ class secp256k1(object):
         """
         X, Y = point.X, point.Y
         return (
-                pow(Y, 2, self.P) - pow(X, 3, self.P) - self.A * X - self.B
+                pow(Y, 2, self.P) - pow(X, 3, self.P) - self.a * X - self.b
             ) % self.P == 0
-
-    @property
-    def base_point(self):
-        """
-        Returns the base point for this curve.
-
-        Returns:
-            JacobianPoint: The base point.
-        """
-        return JacobianPoint(self, self.Gx, self.Gy)
 
 
 class Wallet(secp256k1):
+    """
+    Creates a wallet with a public/private key pair.
+    """
 
     def __init__(self):
         super().__init__()
@@ -170,6 +193,12 @@ class JacobianPoint(secp256k1):
         return "<JacobianPoint (%s, %s, %s)>" %(self.X, self.Y, self.Z)
 
     def double(self):
+        """
+        Doubles this point.
+
+        Returns:
+            JacobianPoint: The point corresponding to `2 * self`.
+        """
         X1, Y1, Z1 = self.X, self.Y, self.Z
 
         if Y1 == 0:
@@ -181,38 +210,54 @@ class JacobianPoint(secp256k1):
         Z3 = (2 * Y1 * Z1) % self.P
         return JacobianPoint(X3, Y3, Z3)
 
-    def inverse(self, N):
-        """
-        Returns the modular inverse of an integer with respect to the field
-        characteristic, P.
-
-        Use the Extended Euclidean Algorithm:
-        https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
-        """
-
-        C, D = N, self.P
-        X1, X2, Y1, Y2 = 1, 0, 0, 1
-
-        while C != 0:
-            Q, C, D = divmod(D, C) + (C,)
-            X1, X2 = X2, X1 - Q * X2
-            Y1, Y2 = Y2, Y1 - Q * Y2
-
-        if N == 1:
-            return X1 % self.P
-
     def to_affine(self):
+        """
+        Converts this point to an affine representation.
+
+        Returns:
+            AffinePoint: The affine reprsentation.
+        """
         X, Y, Z = self.x, self.y, self.inverse(self.z)
         return ((X * Z ** 2) % P, (Y * Z ** 3) % P)
 
-class AffinePoint(object):
+class AffinePoint(secp256k1):
+    """
+    Provides an affine representation of a point on an elliptic curve. It has
+    the standard addition and scalar multiplication operations between two
+    points as overloaded '+' and '*' operators.
 
-    def __init__(self, X, Y):
+    Args:
+        X (int): X component of the point.
+        Y (int): Y component of the point.
+
+    Returns:
+        AffinePoint: The point formed by (X, Y).
+    """
+
+    def __init__(self, X, Y, infinity=False):
+        super().__init__()
         self.X = X
         self.Y = Y
 
-    def __add__(self):
-        raise NotImplementedError()
+    def __add__(self, other):
+        X1, Y1 = self.X, self.Y
+        X2, Y2 = other.X, other.Y
+
+        if self.infinity:
+            return other
+        elif other.infinity:
+            return self
+        elif self == other:
+            return self.double()
+
+        if (X1 == X2) and ((Y1 != Y2) or (Y1 == 0 and Y2 ==0)):
+            return AffinePoint(0, 0, True)
+
+        S = self.slope(other)
+        X3 = (S ** 2 - X1 - X2) % self.P
+        Y3 = (S * (X1 - X3) - Y1) % self.P
+
+        return AffinePoint(X3, Y3)
 
     def __eq__(self, other):
         if not isinstance(other, AffinePoint):
@@ -228,10 +273,51 @@ class AffinePoint(object):
     def __repr__(self):
         return "<AffinePoint (%s, %s)>" % (self.X, self.Y)
 
+    def __str__(self):
+        return "O" if self.infinity else "(%32x, %32x)".format(self.X, self.Y)
+
+    def __sub__(self, other):
+        return self + AffinePoint(other.X, self.P - other.Y)
+
     def double(self):
-        raise NotImplementedError()
+        """
+        Doubles this point.
+
+        Returns:
+            AffinePoint: The point corresponding to `2 * self`.
+        """
+        X1, Y1, a, P = self.X, self.Y, self.a, self.P
+
+        if self.infinity:
+            return self
+
+        S = ((3 * X1 ** 2 + a) * self.inverse(2 * Y1)) % P
+        X2 = (S ** 2 - (2 * X)) % P
+        Y2 = (S * (X - X2) - Y1) % P
+        return AffinePoint(X2, Y2)
+
+    def slope(self, other):
+        """
+        Determines the slope between this point and another point.
+
+        Args:
+            other (AffinePoint): The second point.
+
+        Returns:
+            int: Slope between self and other.
+        """
+        X1, Y1, X2, Y2 = self.X, self.Y, other.X, other.Y
+        Y3 = Y1 - Y2
+        X3 = X1 - X2
+        return (Y3 * self.inverse(X3)) % self.P
 
     def to_jacobian(self):
+        """
+        Converts this point to a Jacobian representation.
+
+        Returns:
+            JacobianPoint: The Jacobian representation.
+        """
         if not self:
             return JacobianPoint(X=0, Y=0, Z=0)
         return JacobianPoint(X=self.X, Y=self.Y, Z=1)
