@@ -7,6 +7,7 @@ This module allows the creation of wallets for various native cryptos.
 from __future__ import print_function
 import hashlib
 import binascii
+import struct
 
 
 class secp256k1(object):
@@ -126,10 +127,15 @@ class Wallet(secp256k1):
         used for the elliptic curve multiplication that results in the public key.
         https://en.wikipedia.org/wiki/Exponentiation_by_squaring
 
+        Bitcoin public keys are 65 bytes. The first byte is 0x04, next 32
+        bytes correspond to the X coordinate, and last 32 bytes correspond
+        to the Y coordinate. They are typically encoded as 130-length hex
+        characters.
+
         Args:
             private_key (bytes): UTF-8 encoded hexadecimal
         Returns:
-
+            str: The public key in hexadecimal representation.
         """
         private_key = int(self.private_key, 16)
         if private_key >= self.N:
@@ -137,7 +143,10 @@ class Wallet(secp256k1):
 
         G = JacobianPoint(self.Gx, self.Gy, 1)
         public_key = G * private_key
-        return public_key
+
+        x_hex = '{0:0{1}x}'.format(public_key.X, 64)
+        y_hex = '{0:0{1}x}'.format(public_key.Y, 64)
+        return '04' + x_hex + y_hex
 
 class JacobianPoint(secp256k1):
     """
@@ -190,7 +199,10 @@ class JacobianPoint(secp256k1):
             return point.double()
 
     def __repr__(self):
-        return "<JacobianPoint (%s, %s, %s)>" %(self.X, self.Y, self.Z)
+        return "<JacobianPoint (%s, %s, %s)>" % (self.X, self.Y, self.Z)
+
+    def __str__(self):
+        return '(%32x, %32x)' % (self.X, self.Y)
 
     def double(self):
         """
@@ -271,10 +283,10 @@ class AffinePoint(secp256k1):
         raise NotImplementedError()
 
     def __repr__(self):
-        return "<AffinePoint (%s, %s)>" % (self.X, self.Y)
+        return '<AffinePoint (%s, %s)>' % (self.X, self.Y)
 
     def __str__(self):
-        return "O" if self.infinity else "(%32x, %32x)".format(self.X, self.Y)
+        return 'O' if self.infinity else '(%32x, %32x)' % (self.X, self.Y)
 
     def __sub__(self, other):
         return self + AffinePoint(other.X, self.P - other.Y)
