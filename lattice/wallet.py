@@ -86,6 +86,7 @@ class Wallet(secp256k1):
         super().__init__()
         self.private_key = self.generate_private_key()
         self.public_key = self.generate_public_key()
+        self.address = self.generate_address()
 
     def generate_private_key(self):
         """
@@ -145,6 +146,21 @@ class Wallet(secp256k1):
         x_hex = '{0:0{1}x}'.format(public_key.X, 64)
         y_hex = '{0:0{1}x}'.format(public_key.Y, 64)
         return '04' + x_hex + y_hex
+
+    def generate_address(self):
+        """
+        https://en.bitcoin.it/wiki/Base58Check_encoding
+        """
+        binary_pubkey = binascii.unhexlify(self.public_key)
+        binary_digest_sha256 = hashlib.sha256(binary_pubkey).digest()
+        binary_digest_ripemd160 = hashlib.new(
+            'ripemd160', binary_digest_sha256
+        ).digest()
+
+        # TODO: Base58Check encoding
+        address = binascii.hexlify(binary_digest_ripemd160)
+        print(address)
+        return address
 
 class JacobianPoint(secp256k1):
     """
