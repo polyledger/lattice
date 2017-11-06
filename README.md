@@ -4,6 +4,16 @@
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/ab47790d1135959e03eb/maintainability)](https://codeclimate.com/repos/59efa550adedb802cc000014/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/ab47790d1135959e03eb/test_coverage)](https://codeclimate.com/repos/59efa550adedb802cc000014/test_coverage)
 
+## Installation
+
+Install with pip:
+
+```
+$ sudo pip install git+https://USERNAME@github.com/polyledger/lattice.git@VERSION
+```
+
+**NOTE**: You must have your SSH access to the Polyledger organization for this method. Replace `USERNAME` with your GitHub username and `VERSION` with the version tag to install, e.g. `0.3.8`.
+
 ## Usage
 
 **Backtesting trading strategies**
