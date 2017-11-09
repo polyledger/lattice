@@ -7,6 +7,8 @@ This module allows the creation of wallets for various native cryptos.
 from __future__ import print_function
 import hashlib
 import binascii
+import base64
+import os
 
 
 class secp256k1(object):
@@ -103,9 +105,8 @@ class Wallet(secp256k1):
         Returns:
             bytes: The hexadecimal representation of the hashed binary data.
         """
-        # TODO: Use a random seed instead of a password.
-        password = 'test'
-        binary_data = bytes(password, 'utf-8')
+        random_string = base64.b64encode(os.urandom(4096)).decode('utf-8')
+        binary_data = bytes(random_string, 'utf-8')
         hash_object = hashlib.sha256(binary_data)
         message_digest_bin = hash_object.digest()
         message_digest_hex = binascii.hexlify(message_digest_bin)
@@ -227,7 +228,7 @@ class JacobianPoint(secp256k1):
             if S1 != S2:
                 return POINT_AT_INFINITY
             else:
-                return self.double((X1, Y1, Z1))
+                return self.double()
         H = U2 - U1
         R = S2 - S1
         X3 = (R ** 2 - H ** 3 - 2 * U1 * H ** 2) % self.P
