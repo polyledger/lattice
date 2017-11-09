@@ -149,17 +149,56 @@ class Wallet(secp256k1):
 
     def generate_address(self):
         """
+        Creates a Bitcoin address from the public key.
+        
+        Details of the steps for creating the address are outlined in this link:
+        https://en.bitcoin.it/wiki/Technical_background_of_version_1_Bitcoin_addresses
+        
+        The last step is Base58Check encoding, which is similar to Base64 encoding but
+        slightly different to create a more human-readable string where '1' and 'l' won't
+        get confused. More on Base64Check encoding here:
         https://en.bitcoin.it/wiki/Base58Check_encoding
         """
         binary_pubkey = binascii.unhexlify(self.public_key)
         binary_digest_sha256 = hashlib.sha256(binary_pubkey).digest()
-        binary_digest_ripemd160 = hashlib.new(
-            'ripemd160', binary_digest_sha256
-        ).digest()
+        binary_digest_ripemd160 = hashlib.new('ripemd160', binary_digest_sha256).digest()
 
-        # TODO: Base58Check encoding
-        address = binascii.hexlify(binary_digest_ripemd160)
-        print(address)
+        binary_version_byte = bytes([0])
+        binary_with_version_key = binary_version_byte + binary_digest_ripemd160
+
+        checksum_intermed = hashlib.sha256(binary_with_version_key).digest()
+        checksum_intermed = hashlib.sha256(checksum_intermed).digest()
+        checksum = checksum_intermed[:4]
+
+        binary_address = binary_digest_ripemd160 + checksum
+
+        leading_zero_bytes = 0
+        
+        for char in binary_address:
+            if char == 0:
+                leading_zero_bytes += 1
+
+        inp = binary_address + checksum
+        result = 0
+
+        while len(inp) > 0:
+            result *= 256
+            result += inp[0]
+            inp = inp[1:]
+        
+        result_bytes = bytes()
+        while result > 0:
+            curcode = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'[result % 58]
+            result_bytes = bytes([ord(curcode)]) + result_bytes
+            result //= 58
+
+        pad_size = 0 - len(result_bytes)
+        padding_element = b'1'
+
+        if pad_size > 0:
+            result_bytes = padding_element * pad_size + result_bytes
+        result = ''.join([chr(y) for y in result_bytes])
+        address = '1' * leading_zero_bytes + result
         return address
 
 class JacobianPoint(secp256k1):
