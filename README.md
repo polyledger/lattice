@@ -77,11 +77,13 @@ bitwise_portfolio_value('2017-10-01')
 **Optimizing portfolio allocations**
 
 ```python
-from lattice.optimize import allocate
+from lattice.optimize import Allocator
 
-allocations = allocate()
-risk_index = 5 # Risk indexes are from 1 to 10
-allocations.loc[risk_index - 1]
+coins = ['BTC', 'ETH', 'LTC', 'XRP']
+allocator = allocator(coins=coins)
+allocations = allocator.allocate()
+risk_index = 5  # Risk indices are from 0 to 5
+allocations.loc[risk_index]
 ```
 
 ## Development
