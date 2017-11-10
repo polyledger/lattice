@@ -40,15 +40,22 @@ def request_from_cryptocompare():
         df.columns = [coin]
         dataframe = pd.concat([dataframe, df], axis=1)
     dataframe = dataframe.iloc[::-1]
-    dataframe.to_csv(filepath)
+    try:
+        df2 = pd.read_csv(filepath, index_col=0)
+        dataframe = dataframe.join(df2)
+        dataframe.to_csv(filepath)
+    except:
+        dataframe.to_csv(filepath)
 
 
 def get_historic_data(start='2010-01-01', end=util.current_date_string()):
     try:
-        return pd.read_csv(filepath, index_col=0).loc[end:start,:]
-    except (EmptyDataError, FileNotFoundError):
+        df = pd.read_csv(filepath, index_col=0).loc[end:start,:]
+        if df.index[0] < end:
+            request_from_cryptocompare()
+    except Exception as e:
         request_from_cryptocompare()
-        return pd.read_csv(filepath).loc[end:start,:]
+    return pd.read_csv(filepath, index_col=0).loc[end:start,:]
 
 def get_price(coin, date):
     df = get_historic_data()
