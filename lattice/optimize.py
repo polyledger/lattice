@@ -115,7 +115,7 @@ class Allocator(object):
 
             columns = {}
             for index, coin in enumerate(self.SUPPORTED_COINS):
-                columns[coin] = math.floor(solution.x[index] * 100) / 100.0
+                columns[coin] = round(solution.x[index] * 100, 2)
 
             # NOTE: These lines could be helpful, but are commented out right now.
             # columns['Return'] = round(np.dot(solution.x, returns.values), 6)
@@ -173,7 +173,7 @@ class Allocator(object):
 
         #==== Calculate portfolio with the minimum risk ====#
         min_risk = self.get_min_risk(weights, cov_matrix)
-        min_return = round(np.dot(min_risk, returns.values), 9)
+        min_return = np.dot(min_risk, returns.values)
 
         #==== Calculate portfolio with the maximum return ====#
         max_return = self.get_max_return(weights, returns)

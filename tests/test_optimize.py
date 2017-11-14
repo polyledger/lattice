@@ -2,6 +2,18 @@
 
 """
 Test the optimize module.
+
+To run tests for this file only, use the following command:
+
+```
+$ python -m unittest tests.test_optimize
+```
+
+You can run a specific test like so:
+
+```
+$ python -m unittest tests.test_optimize.TestOptimize.test_allocate
+```
 """
 
 import unittest
