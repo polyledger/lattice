@@ -138,13 +138,22 @@ class TestPortfolio(unittest.TestCase):
         )
 
     def test_backtest(self):
-        allocations = Allocator(coins=['BTC', 'ETH', 'LTC']).allocate()
+        coins = ['BTC', 'ETH', 'LTC']
+        allocations = Allocator(coins=coins).allocate()
 
         for index, allocation in allocations.iterrows():
             portfolio = Portfolio({'USD': 100}, '2017-01-01')
-            portfolio.trade_asset(allocation['ETH'], 'USD', 'ETH', '2017-01-01')
-            portfolio.trade_asset(allocation['BTC'], 'USD', 'BTC', '2017-01-01')
-            portfolio.trade_asset(allocation['LTC'], 'USD', 'LTC', '2017-01-01')
+            for coin in coins:
+                portfolio.trade_asset(allocation[coin], 'USD', coin, '2017-01-01')
+        data = portfolio.get_historical_value('2017-01-01', '2017-11-13', 'D')
+
+        coins = ['BTC', 'ETH', 'LTC', 'ZEC', 'BCH', 'NEO', 'XMR', 'ETC', 'DASH', 'XRP']
+        allocations = Allocator(coins=coins).allocate()
+
+        for index, allocation in allocations.iterrows():
+            portfolio = Portfolio({'USD': 100}, '2017-01-01')
+            for coin in coins:
+                portfolio.trade_asset(allocation[coin], 'USD', coin, '2017-01-01')
         data = portfolio.get_historical_value('2017-01-01', '2017-11-13', 'D')
 
 if __name__ == '__main__':
