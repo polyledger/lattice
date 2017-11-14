@@ -18,6 +18,7 @@ $ python -m unittest tests.test_backtest.TestPortfolio.test_add_asset
 
 import unittest
 from lattice.backtest import Portfolio
+from lattice.optimize import Allocator
 
 class TestPortfolio(unittest.TestCase):
     """Test the portfolio class."""
@@ -135,6 +136,16 @@ class TestPortfolio(unittest.TestCase):
         self.assertEqual(
             len(historical_value['dates']), len(historical_value['values'])
         )
+
+    def test_backtest(self):
+        allocations = Allocator(coins=['BTC', 'ETH', 'LTC']).allocate()
+
+        for index, allocation in allocations.iterrows():
+            portfolio = Portfolio({'USD': 100}, '2017-01-01')
+            portfolio.trade_asset(allocation['ETH'], 'USD', 'ETH', '2017-01-01')
+            portfolio.trade_asset(allocation['BTC'], 'USD', 'BTC', '2017-01-01')
+            portfolio.trade_asset(allocation['LTC'], 'USD', 'LTC', '2017-01-01')
+        data = portfolio.get_historical_value('2017-01-01', '2017-11-13', 'D')
 
 if __name__ == '__main__':
     unittest.main()

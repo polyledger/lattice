@@ -115,7 +115,7 @@ class Allocator(object):
 
             columns = {}
             for index, coin in enumerate(self.SUPPORTED_COINS):
-                columns[coin] = round(solution.x[index] * 100, 2)
+                columns[coin] = math.floor(solution.x[index] * 100 * 100) / 100
 
             # NOTE: These lines could be helpful, but are commented out right now.
             # columns['Return'] = round(np.dot(solution.x, returns.values), 6)
