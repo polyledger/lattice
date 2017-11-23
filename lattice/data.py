@@ -26,7 +26,6 @@ def request_from_cryptocompare():
     url = 'https://min-api.cryptocompare.com/data/histoday'
 
     for coin in coins:
-        print('Getting {} prices...'.format(coin))
         params = {
             'fsym': coin,
             'tsym': 'USD',
@@ -49,12 +48,15 @@ def request_from_cryptocompare():
 
 
 def get_historic_data(start='2010-01-01', end=util.current_date_string()):
-    try:
-        df = pd.read_csv(filepath, index_col=0).loc[end:start,:]
-        if df.index[0] < end:
-            request_from_cryptocompare()
-    except Exception as e:
+    if end > util.current_date_string():
+        raise ValueError('\'end\' value is invalid.')
+
+    df = pd.read_csv(filepath, index_col=0)
+
+    if df.index[0] < end:
         request_from_cryptocompare()
+    else:
+        df = df.loc[end:start,:]
     return pd.read_csv(filepath, index_col=0).loc[end:start,:]
 
 def get_price(coin, date):
