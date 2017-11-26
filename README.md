@@ -86,6 +86,19 @@ risk_index = 5  # Risk indices are from 0 to 5
 allocations.loc[risk_index]
 ```
 
+**Saving data to a CSV**
+
+``` python
+from lattice.data import get_historic_data
+
+start = '2017-01-01'
+end = '2017-06-01'
+path = '/Users/ari/Desktop/prices.csv'
+
+df = get_historic_data(start, end)
+df.to_csv(path)
+```
+
 ## Development
 
 ### Getting Started
