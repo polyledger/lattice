@@ -18,7 +18,7 @@ DEFAULT_COINS = [
 ]
 
 class Allocator(object):
-    
+
     def __init__(self, coins=DEFAULT_COINS, start='2017-10-01', end=util.current_date_string()):
         self.SUPPORTED_COINS = coins
         self.start = start
@@ -142,6 +142,7 @@ class Allocator(object):
         """
 
         dataframe = self.retrieve_data()
+        dataframe = dataframe[self.SUPPORTED_COINS]
 
         #==== Calculate the daily changes ====#
         change_columns = []

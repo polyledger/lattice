@@ -33,8 +33,13 @@ class TestOptimize(unittest.TestCase):
 
     def test_allocate(self):
         """Ensure that the allocations for the given data are optimal."""
-        allocations = Allocator().allocate()
+        default_allocations = Allocator().allocate()
         allocations = Allocator(coins=['BTC', 'ETH', 'LTC']).allocate()
+        allocations = Allocator(coins=['XMR', 'XRP', 'ZEC']).allocate()
+        allocations = Allocator(
+            coins=['BTC', 'BCH', 'ETH', 'LTC', 'ETC', 'NEO', 'DASH', 'XMR', 'XRP', 'ZEC']
+        ).allocate()
+        self.assertEqual(default_allocations['ETH'].all(), allocations['ETH'].all())
 
 if __name__ == '__main__':
     unittest.main()
