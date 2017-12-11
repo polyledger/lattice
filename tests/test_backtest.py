@@ -136,6 +136,14 @@ class TestPortfolio(unittest.TestCase):
         self.assertEqual(
             len(historical_value['dates']), len(historical_value['values'])
         )
+        historical_value = portfolio_5.get_historical_value(
+            '2010-01-01', '2017-11-28', freq='D'
+        )
+        self.assertTrue(len(historical_value['dates']) <= 22)
+        self.assertTrue(len(historical_value['values']) <= 22)
+        self.assertEqual(
+            len(historical_value['dates']), len(historical_value['values'])
+        )
 
     def test_backtest(self):
         coins = ['BTC', 'ETH', 'LTC']

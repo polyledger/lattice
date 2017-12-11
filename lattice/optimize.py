@@ -136,13 +136,17 @@ class Allocator(object):
             constraints=constraints, method='SLSQP', options={'disp': False}
         )
 
-    def allocate(self, start='2017-10-01', end=util.current_date_string()):
+    def allocate(self, data=None, start='2017-10-01', end=util.current_date_string()):
         """
         Returns an efficient portfolio allocation for the given risk index.
         """
 
-        dataframe = self.retrieve_data()
-        dataframe = dataframe[self.SUPPORTED_COINS]
+        if data == None:
+            # For testing purposes, use the dataset
+            dataframe = self.retrieve_data()
+            dataframe = dataframe[self.SUPPORTED_COINS]
+        else:
+            dataframe = data
 
         #==== Calculate the daily changes ====#
         change_columns = []

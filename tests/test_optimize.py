@@ -26,7 +26,7 @@ class TestOptimize(unittest.TestCase):
 
     def test_retrieve_data(self):
         """Ensure that the data columns are ordered and named correctly"""
-        dataframe = Allocator('2017-01-01', '2017-10-01').retrieve_data()
+        dataframe = Allocator(start='2017-01-01', end='2017-10-01').retrieve_data()
         expected = ['BTC', 'ETH', 'BCH', 'XRP', 'LTC', 'XMR', 'ZEC', 'DASH',
                     'ETC', 'NEO']
         self.assertEqual(dataframe.columns.tolist(), expected)
