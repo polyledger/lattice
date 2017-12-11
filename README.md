@@ -12,7 +12,7 @@ Install with pip:
 $ sudo pip install git+https://USERNAME@github.com/polyledger/lattice.git@VERSION
 ```
 
-**NOTE**: You must have your SSH access to the Polyledger organization for this method. Replace `USERNAME` with your GitHub username and `VERSION` with the version tag to install, e.g. `0.4.4`.
+**NOTE**: You must have your SSH access to the Polyledger organization for this method. Replace `USERNAME` with your GitHub username and `VERSION` with the version tag to install, e.g. `0.4.5`.
 
 ## Usage
 
