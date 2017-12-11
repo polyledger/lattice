@@ -183,6 +183,6 @@ class Allocator(object):
 
         #==== Calculate efficient frontier ====#
         frontier = self.efficient_frontier(
-            returns, cov_matrix, min_return, max_return, 6
+            returns, cov_matrix, min_return, max_return, 5
         )
         return frontier
