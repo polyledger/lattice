@@ -49,10 +49,10 @@ portfolio.get_historical_value('2017-10-01', chart=True)
 
 # Get portfolio value of all 10 portfolios for a portfolio created at the start of October
 from lattice.backtest import Portfolio
-from lattice.optimize import allocate
+from lattice.optimize import Allocator
 
 def polyledger_portfolio_values(since):
-    allocations = allocate()
+    allocations = Allocator(coins=['BTC', 'LTC', 'ETH']).allocate()
     for index, allocation in allocations.iterrows():
         p = Portfolio({'USD': 10000}, since)
         for coin in allocation.keys():
@@ -80,7 +80,7 @@ bitwise_portfolio_value('2017-10-01')
 from lattice.optimize import Allocator
 
 coins = ['BTC', 'ETH', 'LTC', 'XRP']
-allocator = allocator(coins=coins)
+allocator = Allocator(coins=coins)
 allocations = allocator.allocate()
 risk_index = 5  # Risk indices are from 0 to 5
 allocations.loc[risk_index]
