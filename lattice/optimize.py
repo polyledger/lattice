@@ -141,7 +141,7 @@ class Allocator(object):
         Returns an efficient portfolio allocation for the given risk index.
         """
 
-        if data == None:
+        if data is None:
             # For testing purposes, use the dataset
             dataframe = self.retrieve_data()
             dataframe = dataframe[self.SUPPORTED_COINS]

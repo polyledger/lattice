@@ -31,6 +31,11 @@ class TestOptimize(unittest.TestCase):
                     'ETC', 'NEO']
         self.assertEqual(dataframe.columns.tolist(), expected)
 
+    def test_data_argument(self):
+        """Ensure that passing in a dataframe works"""
+        data = pd.read_csv('../lattice/datasets/day_historical.csv')
+        allocations = Allocator(coins=['BTC', 'ETH', 'LTC']).allocate(data=data)
+
     def test_allocate(self):
         """Ensure that the allocations for the given data are optimal."""
         default_allocations = Allocator().allocate()
