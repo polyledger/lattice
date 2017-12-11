@@ -170,6 +170,8 @@ class Allocator(object):
 
         #==== Calculate risk and expected return ====#
         cov_matrix = dataframe[columns].cov()
+        # NOTE: The diagonal variances weren't calculated correctly, so here is a fix.
+        cov_matrix.values[[np.arange(len(self.SUPPORTED_COINS))] * 2] = dataframe[columns].apply(np.nanvar, axis=0)
         weights = np.array([1/len(self.SUPPORTED_COINS)] * len(self.SUPPORTED_COINS)).reshape(len(self.SUPPORTED_COINS), 1)
 
         #==== Calculate portfolio with the minimum risk ====#
