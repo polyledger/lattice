@@ -33,8 +33,8 @@ def request_from_cryptocompare():
         }
         result = requests.get(url=url, params=params)
         data = result.json()['Data']
-        df = pd.DataFrame.from_records(data, columns=['time', 'close'])
-        df.set_index('time', inplace=True, drop=True)
+        df = pd.DataFrame.from_records(data, columns=['date', 'close'])
+        df.set_index('date', inplace=True, drop=True)
         df.index = pd.to_datetime(df.index, unit='s')
         df.columns = [coin]
         dataframe = pd.concat([dataframe, df], axis=1)
