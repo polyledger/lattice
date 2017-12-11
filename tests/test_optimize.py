@@ -16,6 +16,7 @@ $ python -m unittest tests.test_optimize.TestOptimize.test_allocate
 ```
 """
 
+import os
 import unittest
 import numpy as np
 import pandas as pd
@@ -33,8 +34,24 @@ class TestOptimize(unittest.TestCase):
 
     def test_data_argument(self):
         """Ensure that passing in a dataframe works"""
-        data = pd.read_csv('../lattice/datasets/day_historical.csv')
-        allocations = Allocator(coins=['BTC', 'ETH', 'LTC']).allocate(data=data)
+        filepath = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            '..',
+            'lattice/datasets/day_historical.csv'
+        )
+        dataset = pd.read_csv(filepath)
+        allocations = Allocator(coins=['BTC', 'ETH', 'LTC']).allocate(dataset=dataset)
+
+    def test_coin_ordering(self):
+        """Ensure that the order of the coins argument doesn't matter"""
+        allocation1 = Allocator(
+            coins=['BTC', 'BCH', 'ETH', 'LTC', 'ETC', 'NEO', 'DASH', 'XMR', 'XRP', 'ZEC']
+        ).allocate()
+        allocation2 = Allocator(
+            coins=['ZEC', 'XRP', 'XMR', 'DASH', 'NEO', 'ETC', 'LTC', 'ETH', 'BCH', 'BTC']
+        ).allocate()
+        for column in allocation1:
+            self.assertEqual(allocation1[column].all(), allocation2[column].all())
 
     def test_allocate(self):
         """Ensure that the allocations for the given data are optimal."""

@@ -66,7 +66,7 @@ class Allocator(object):
 
         def func(weights):
             """The objective function that maximizes returns."""
-            return np.dot(weights, returns.values) * -1
+            return np.dot(weights, returns) * -1
 
         constraints = ({'type': 'eq', 'fun': lambda weights: (weights.sum() - 1)})
         solution = self.solve_minimize(func, weights, constraints)
@@ -107,7 +107,7 @@ class Allocator(object):
             constraints = (
                 {'type': 'eq', 'fun': lambda weights: (weights.sum() - 1)},
                 {'type': 'ineq', 'fun': lambda weights, i=point: (
-                    np.dot(weights, returns.values) - i
+                    np.dot(weights, returns) - i
                 )}
             )
 
@@ -118,8 +118,8 @@ class Allocator(object):
                 columns[coin] = math.floor(solution.x[index] * 100 * 100) / 100
 
             # NOTE: These lines could be helpful, but are commented out right now.
-            # columns['Return'] = round(np.dot(solution.x, returns.values), 6)
-            # columns['Risk'] = round(solution.fun, 6)
+            # columns['Return'] = round(np.dot(solution.x, returns), 5)
+            # columns['Risk'] = round(solution.fun, 5)
 
             values = values.append(columns, ignore_index=True)
 
@@ -136,24 +136,25 @@ class Allocator(object):
             constraints=constraints, method='SLSQP', options={'disp': False}
         )
 
-    def allocate(self, data=None, start='2017-10-01', end=util.current_date_string()):
+    def allocate(self, dataset=None):
         """
         Returns an efficient portfolio allocation for the given risk index.
         """
 
-        if data is None:
+        if dataset is None:
             # For testing purposes, use the dataset
             dataframe = self.retrieve_data()
             dataframe = dataframe[self.SUPPORTED_COINS]
         else:
-            dataframe = data
+            dataset.set_index('date', inplace=True, drop=True)
+            dataset.index = pd.to_datetime(dataset.index)
+            dataset.replace(0, np.nan, inplace=True)
+            dataframe = dataset.loc[self.end:self.start,:]
 
         #==== Calculate the daily changes ====#
         change_columns = []
         for column in dataframe:
             if column in self.SUPPORTED_COINS:
-                if column == 'time':
-                    continue
                 change_column = '{}_change'.format(column)
                 dataframe[change_column] = (
                     (dataframe[column].shift(-1) - dataframe[column]) /
@@ -169,8 +170,15 @@ class Allocator(object):
         # NOTE: `risks` is not used, but may be used in the future
         risks = dataframe[columns].apply(np.nanvar, axis=0)
         # print('\nVariance:\n{}\n'.format(risks))
-        returns = dataframe[columns].apply(np.nanmean, axis=0)
-        # print('\nExpected returns:\n{}\n'.format(returns))
+
+        returns = []
+        for column in dataframe:
+            if column in self.SUPPORTED_COINS:
+                val = (
+                    (dataframe[column].iloc[0] - dataframe[column].iloc[-1]) /
+                    dataframe[column].iloc[-1]
+                )
+                returns.append(val)
 
         #==== Calculate risk and expected return ====#
         cov_matrix = dataframe[columns].cov()
@@ -180,7 +188,7 @@ class Allocator(object):
 
         #==== Calculate portfolio with the minimum risk ====#
         min_risk = self.get_min_risk(weights, cov_matrix)
-        min_return = np.dot(min_risk, returns.values)
+        min_return = np.dot(min_risk, returns)
 
         #==== Calculate portfolio with the maximum return ====#
         max_return = self.get_max_return(weights, returns)
