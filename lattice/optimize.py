@@ -7,10 +7,9 @@ This module creates optimal portfolio allocations, given a risk index.
 import math
 import numpy as np
 import pandas as pd
+from datetime import datetime
 from scipy.optimize import minimize
-
-from lattice import util
-from lattice.data import get_historic_data, get_price
+from lattice.data import Manager
 
 
 DEFAULT_COINS = [
@@ -19,10 +18,17 @@ DEFAULT_COINS = [
 
 class Allocator(object):
 
-    def __init__(self, coins=DEFAULT_COINS, start='2017-10-01', end=util.current_date_string()):
+    def __init__(
+        self,
+        coins=DEFAULT_COINS,
+        start=datetime(2017, 10, 1),
+        end=datetime.today(),
+        manager=Manager()
+    ):
         self.SUPPORTED_COINS = coins
         self.start = start
         self.end = end
+        self.manager = manager
 
     def retrieve_data(self):
         """
@@ -31,9 +37,9 @@ class Allocator(object):
 
         #==== Retrieve data ====#
 
-        dataframe = get_historic_data(self.start, self.end)
-        dataframe.replace(0, np.nan, inplace=True)
-        return dataframe
+        df = self.manager.get_historic_data(self.start.date(), self.end.date())
+        df.replace(0, np.nan, inplace=True)
+        return df
 
     def get_min_risk(self, weights, cov_matrix):
         """
@@ -66,7 +72,7 @@ class Allocator(object):
 
         def func(weights):
             """The objective function that maximizes returns."""
-            return np.dot(weights, returns) * -1
+            return np.dot(weights, returns.values) * -1
 
         constraints = ({'type': 'eq', 'fun': lambda weights: (weights.sum() - 1)})
         solution = self.solve_minimize(func, weights, constraints)
@@ -80,7 +86,14 @@ class Allocator(object):
 
         return max_return
 
-    def efficient_frontier(self, returns, cov_matrix, min_return, max_return, count):
+    def efficient_frontier(
+        self,
+        returns,
+        cov_matrix,
+        min_return,
+        max_return,
+        count
+    ):
         """
         Returns a DataFrame of efficient portfolio allocations for `count` risk
         indices.
@@ -107,7 +120,7 @@ class Allocator(object):
             constraints = (
                 {'type': 'eq', 'fun': lambda weights: (weights.sum() - 1)},
                 {'type': 'ineq', 'fun': lambda weights, i=point: (
-                    np.dot(weights, returns) - i
+                    np.dot(weights, returns.values) - i
                 )}
             )
 
@@ -118,14 +131,22 @@ class Allocator(object):
                 columns[coin] = math.floor(solution.x[index] * 100 * 100) / 100
 
             # NOTE: These lines could be helpful, but are commented out right now.
-            # columns['Return'] = round(np.dot(solution.x, returns), 5)
-            # columns['Risk'] = round(solution.fun, 5)
+            # columns['Return'] = round(np.dot(solution.x, returns), 6)
+            # columns['Risk'] = round(solution.fun, 6)
 
             values = values.append(columns, ignore_index=True)
 
         return values
 
-    def solve_minimize(self, func, weights, constraints, lower_bound=0.0, upper_bound=1.0, func_deriv=False):
+    def solve_minimize(
+        self,
+        func,
+        weights,
+        constraints,
+        lower_bound=0.0,
+        upper_bound=1.0,
+        func_deriv=False
+    ):
         """
         Returns the solution to a minimization problem.
         """
@@ -136,60 +157,50 @@ class Allocator(object):
             constraints=constraints, method='SLSQP', options={'disp': False}
         )
 
-    def allocate(self, dataframe=None):
+    def allocate(self):
         """
         Returns an efficient portfolio allocation for the given risk index.
         """
-        if dataframe is None:
-            # For testing purposes, use the dataframe
-            dataframe = self.retrieve_data()
-            dataframe = dataframe[self.SUPPORTED_COINS]
+        df = self.manager.get_historic_data()[self.SUPPORTED_COINS]
 
         #==== Calculate the daily changes ====#
         change_columns = []
-        for column in dataframe:
+        for column in df:
             if column in self.SUPPORTED_COINS:
                 change_column = '{}_change'.format(column)
                 values = pd.Series(
-                    (dataframe[column].shift(-1) - dataframe[column]) /
-                    -dataframe[column].shift(-1)
+                    (df[column].shift(-1) - df[column]) /
+                    -df[column].shift(-1)
                 ).values
-                dataframe[change_column] = values
+                df[change_column] = values
                 change_columns.append(change_column)
 
-        # print(dataframe.head())
-        # print(dataframe.tail())
+        # print(df.head())
+        # print(df.tail())
 
         #==== Variances and returns ====#
         columns = change_columns
         # NOTE: `risks` is not used, but may be used in the future
-        risks = dataframe[columns].apply(np.nanvar, axis=0)
+        risks = df[columns].apply(np.nanvar, axis=0)
         # print('\nVariance:\n{}\n'.format(risks))
-
-        returns = []
-        for column in dataframe:
-            if column in self.SUPPORTED_COINS:
-                val = (
-                    (dataframe[column].iloc[0] - dataframe[column].iloc[-1]) /
-                    dataframe[column].iloc[-1]
-                )
-                returns.append(val)
+        returns = df[columns].apply(np.nanmean, axis=0)
+        # print('\nExpected returns:\n{}\n'.format(returns))
 
         #==== Calculate risk and expected return ====#
-        cov_matrix = dataframe[columns].cov()
+        cov_matrix = df[columns].cov()
         # NOTE: The diagonal variances weren't calculated correctly, so here is a fix.
-        cov_matrix.values[[np.arange(len(self.SUPPORTED_COINS))] * 2] = dataframe[columns].apply(np.nanvar, axis=0)
+        cov_matrix.values[[np.arange(len(self.SUPPORTED_COINS))] * 2] = df[columns].apply(np.nanvar, axis=0)
         weights = np.array([1/len(self.SUPPORTED_COINS)] * len(self.SUPPORTED_COINS)).reshape(len(self.SUPPORTED_COINS), 1)
 
         #==== Calculate portfolio with the minimum risk ====#
         min_risk = self.get_min_risk(weights, cov_matrix)
-        min_return = np.dot(min_risk, returns)
+        min_return = np.dot(min_risk, returns.values)
 
         #==== Calculate portfolio with the maximum return ====#
         max_return = self.get_max_return(weights, returns)
 
         #==== Calculate efficient frontier ====#
         frontier = self.efficient_frontier(
-            returns, cov_matrix, min_return, max_return, 5
+            returns, cov_matrix, min_return, max_return, 6
         )
         return frontier

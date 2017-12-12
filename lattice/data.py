@@ -7,59 +7,70 @@ This module is an interface for accessing cryptocurrency market data.
 import os
 import math
 import requests
+from datetime import datetime, date
 import pandas as pd
 import numpy as np
 from pandas.io.common import EmptyDataError
 
-from lattice import util
 
+DEFAULT_COINS = [
+    'BCH', 'BTC', 'DASH', 'ETC', 'ETH', 'LTC', 'NEO', 'XMR', 'XRP', 'ZEC'
+]
 
-coins = ['BTC', 'ETH', 'BCH', 'XRP', 'LTC', 'XMR', 'ZEC', 'DASH', 'ETC', 'NEO']
+class Manager(object):
 
-filepath = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    'datasets/day_historical.csv'
-)
+    filepath = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'datasets/day_historical.csv'
+    )
 
-def request_from_cryptocompare():
-    dataframe = pd.DataFrame()
-    url = 'https://min-api.cryptocompare.com/data/histoday'
+    def __init__(self, coins=DEFAULT_COINS, df=None):
+        self.coins = coins
+        self.df = df
 
-    for coin in coins:
-        params = {
-            'fsym': coin,
-            'tsym': 'USD',
-            'allData': 'true'
-        }
-        result = requests.get(url=url, params=params)
-        data = result.json()['Data']
-        df = pd.DataFrame.from_records(data, columns=['time', 'close'])
-        df.set_index('time', inplace=True, drop=True)
-        df.index = pd.to_datetime(df.index, unit='s')
-        df.columns = [coin]
-        dataframe = pd.concat([dataframe, df], axis=1)
-    dataframe = dataframe.iloc[::-1]
-    try:
-        df2 = pd.read_csv(filepath, index_col=0)
-        dataframe = dataframe.join(df2)
-        dataframe.to_csv(filepath)
-    except:
-        dataframe.to_csv(filepath)
+    def get_historic_data(self, start=date(2010, 1, 1), end=date.today()):
+        if end > date.today():
+            raise ValueError('Value for \'end\' argument is invalid.')
+        if self.df is None:
+            self.df = pd.read_csv(
+                filepath_or_buffer=self.filepath,
+                index_col=0,
+                parse_dates=[0],
+                infer_datetime_format=True
+            )
+            latest_date = self.df.index[0].date()
 
+            if latest_date < end:
+                self.df = self.fetch_data()
+            self.df = self.df.loc[end:start,:]
+            return self.df
+        else:
+            return self.df
 
-def get_historic_data(start='2010-01-01', end=util.current_date_string()):
-    if end > util.current_date_string():
-        raise ValueError('\'end\' value is invalid.')
+    def fetch_data(self):
+        df_new = pd.DataFrame()
+        url = 'https://min-api.cryptocompare.com/data/histoday'
 
-    df = pd.read_csv(filepath, index_col=0)
+        for coin in self.coins:
+            params = {'fsym': coin, 'tsym': 'USD', 'allData': 'true'}
+            result = requests.get(url=url, params=params)
+            data = result.json()['Data']
+            df_temp = pd.DataFrame.from_records(data, columns=['time', 'close'])
+            df_temp.set_index('time', inplace=True, drop=True)
+            df_temp.index = pd.to_datetime(df_temp.index, unit='s')
+            df_temp.columns = [coin]
+            df_new = pd.concat([df_temp, df_new], axis=1)
+        df_new = df_new.iloc[::-1]
 
-    if df.index[0] < end:
-        request_from_cryptocompare()
-    else:
-        df = df.loc[end:start,:]
-    return pd.read_csv(filepath, index_col=0).loc[end:start,:]
+        try:
+            df_old = pd.read_csv(self.filepath, index_col=0)
+            df_new = df_new.join(df_old)
+            df_new.to_csv(self.filepath)
+        except:
+            df_new.to_csv(self.filepath)
+        return df_new
 
-def get_price(coin, date):
-    df = get_historic_data()
-    price = df.loc[date, coin]
-    return price
+    def get_price(self, coin, date):
+        df = self.get_historic_data()
+        price = df.loc[date, coin]
+        return price

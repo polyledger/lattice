@@ -20,6 +20,8 @@ import os
 import unittest
 import numpy as np
 import pandas as pd
+from datetime import datetime
+from lattice.data import Manager
 from lattice.optimize import Allocator
 
 class TestOptimize(unittest.TestCase):
@@ -27,41 +29,57 @@ class TestOptimize(unittest.TestCase):
 
     def test_retrieve_data(self):
         """Ensure that the data columns are ordered and named correctly"""
-        dataframe = Allocator(start='2017-01-01', end='2017-10-01').retrieve_data()
-        expected = ['BTC', 'ETH', 'BCH', 'XRP', 'LTC', 'XMR', 'ZEC', 'DASH',
-                    'ETC', 'NEO']
-        self.assertEqual(dataframe.columns.tolist(), expected)
+        df = Allocator(
+            start=datetime(2017, 1, 1),
+            end=datetime(2017, 10, 1)
+        ).retrieve_data()
+        expected = ['BCH', 'BTC', 'DASH', 'ETC', 'ETH', 'LTC', 'NEO', 'XMR',
+                    'XRP', 'ZEC']
+        self.assertEqual(sorted(df.columns.tolist()), expected)
 
     def test_data_argument(self):
-        """Ensure that passing in a dataframe works"""
+        """Ensure that passing in a DataFrame works"""
         filepath = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             '..',
             'lattice/datasets/day_historical.csv'
         )
-        dataset = pd.read_csv(filepath)
-        allocations = Allocator(coins=['BTC', 'ETH', 'LTC']).allocate(dataset=dataset)
+        df = pd.read_csv(
+            filepath_or_buffer=filepath,
+            index_col=0,
+            parse_dates=[0],
+            infer_datetime_format=True
+        )
+        manager = Manager(df=df)
+        allocations = Allocator(
+            coins=['BTC', 'ETH', 'LTC'],
+            manager=manager
+        ).allocate()
+        allocations = Allocator(coins=['BTC', 'ETH', 'LTC']).allocate()
 
     def test_coin_ordering(self):
         """Ensure that the order of the coins argument doesn't matter"""
-        allocation1 = Allocator(
-            coins=['BTC', 'BCH', 'ETH', 'LTC', 'ETC', 'NEO', 'DASH', 'XMR', 'XRP', 'ZEC']
-        ).allocate()
-        allocation2 = Allocator(
-            coins=['ZEC', 'XRP', 'XMR', 'DASH', 'NEO', 'ETC', 'LTC', 'ETH', 'BCH', 'BTC']
-        ).allocate()
+        allocation1 = Allocator(coins=['BTC', 'BCH', 'ETH', 'LTC', 'ETC', 'NEO',
+            'DASH', 'XMR', 'XRP', 'ZEC']).allocate()
+        allocation2 = Allocator(coins=['ZEC', 'XRP', 'XMR', 'DASH', 'NEO',
+            'ETC', 'LTC', 'ETH', 'BCH', 'BTC']).allocate()
         for column in allocation1:
-            self.assertEqual(allocation1[column].all(), allocation2[column].all())
+            self.assertEqual(
+                allocation1[column].all(),
+                allocation2[column].all()
+            )
 
     def test_allocate(self):
         """Ensure that the allocations for the given data are optimal."""
         default_allocations = Allocator().allocate()
         allocations = Allocator(coins=['BTC', 'ETH', 'LTC']).allocate()
         allocations = Allocator(coins=['XMR', 'XRP', 'ZEC']).allocate()
-        allocations = Allocator(
-            coins=['BTC', 'BCH', 'ETH', 'LTC', 'ETC', 'NEO', 'DASH', 'XMR', 'XRP', 'ZEC']
-        ).allocate()
-        self.assertEqual(default_allocations['ETH'].all(), allocations['ETH'].all())
+        allocations = Allocator(coins=['BTC', 'BCH', 'ETH', 'LTC', 'ETC', 'NEO',
+            'DASH', 'XMR', 'XRP', 'ZEC']).allocate()
+        self.assertEqual(
+            default_allocations['ETH'].all(),
+            allocations['ETH'].all()
+        )
 
 if __name__ == '__main__':
     unittest.main()
