@@ -11,18 +11,24 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
-
+from datetime import datetime
 from lattice import util
-from lattice.data import get_price
+from lattice.data import Manager
 
 class Portfolio(object):
     """
     An object that contains the state of a mock portfolio at any given time.
     """
 
-    def __init__(self, assets=None, created_at=util.current_date_string()):
+    def __init__(
+        self,
+        assets=None,
+        created_at=datetime.now(),
+        manager=Manager()
+    ):
         self.created_at = created_at
         self.history = []
+        self.manager = manager
         if assets:
             self.assets = {}
             for asset, amount in assets.items():
@@ -30,14 +36,13 @@ class Portfolio(object):
         else:
             self.assets = {'USD': 0}
 
-    def add_asset(self, asset='USD', amount=0,
-                  datetime=util.current_date_string()):
+    def add_asset(self, asset='USD', amount=0, timestamp=datetime.now()):
         """
         Adds the given amount of an asset to this portfolio.
 
         :param asset: the asset to add to the portfolio
         :param amount: the amount of the asset to add
-        :param datetime: datetime string indicating the time the asset was added
+        :param timestamp: datetime obj indicating the time the asset was added
         """
         if amount < 0:
             raise ValueError('Asset amount must be greater than zero. '
@@ -47,18 +52,18 @@ class Portfolio(object):
         else:
             self.assets[asset] += amount
         self.history.append({
-            'datetime': datetime,
+            'timestamp': timestamp,
             'asset': asset,
             'amount': +amount
         })
 
-    def get_value(self, datetime=util.current_date_string(), asset=None):
+    def get_value(self, timestamp=datetime.now(), asset=None):
         """
         Get the value of the portfolio at a given time.
 
         :param asset: gets the value of a given asset in this portfolio if
                       specified; if None, returns the portfolio's value
-        :param datetime: a datetime to check the portfolio's value at
+        :param timestamp: a datetime obj to check the portfolio's value at
         :returns: the value of the portfolio
         """
         value = 0
@@ -66,7 +71,7 @@ class Portfolio(object):
         # Backdate the portfolio by changing its values temporarily
         backdated_assets = self.assets.copy()
         for trade in list(reversed(self.history)):
-            if trade['datetime'] > datetime:
+            if trade['timestamp'] > timestamp:
                 backdated_assets[trade['asset']] -= trade['amount']
 
                 if backdated_assets[trade['asset']] == 0:
@@ -75,7 +80,7 @@ class Portfolio(object):
         if asset:
             if asset != 'USD':
                 amount = backdated_assets[asset]
-                price = get_price(asset, datetime)
+                price = self.manager.get_price(asset, timestamp)
                 value = price * amount
             else:
                 if asset not in backdated_assets:
@@ -86,7 +91,7 @@ class Portfolio(object):
             for backdated_asset in backdated_assets:
                 amount = backdated_assets[backdated_asset]
                 if backdated_asset != 'USD':
-                    price = get_price(backdated_asset, datetime)
+                    price = self.manager.get_price(backdated_asset, timestamp)
                     value += price * amount
                 else:
                     value += amount
@@ -94,8 +99,8 @@ class Portfolio(object):
 
     def get_historical_value(
             self,
-            start_datetime,
-            end_datetime=util.current_date_string(),
+            start,
+            end=datetime.now(),
             freq='D',
             date_format='%m-%d-%Y',
             chart=False,
@@ -104,15 +109,15 @@ class Portfolio(object):
         """
         Display a chart of this portfolios value during the specified timeframe.
 
-        :param start_datetime: the left bound of the time interval
-        :param end_datetime: the right bound of the time interval
+        :param start: datetime obj left bound of the time interval
+        :param end: datetime obj right bound of the time interval
         :param freq: a time frequency within the interval
         :param date_format: the format of the date/x-axis labels
         :param chart: whether to display a chart or return data
         :returns: a dict of historical value data if chart is false
         """
 
-        date_range = pd.date_range(start_datetime, end_datetime, freq=freq)
+        date_range = pd.date_range(start, end, freq=freq)
 
         # Set the maximum number of x-axis ticks to 22 since every date results
         # in an API call.
@@ -128,7 +133,7 @@ class Portfolio(object):
         values = []
 
         for date in date_range:
-            values.append(self.get_value(str(date.date())))
+            values.append(self.get_value(date))
 
         time_series = pd.DataFrame(index=date_range, data={'Value': values})
 
@@ -141,39 +146,34 @@ class Portfolio(object):
             dates = time_series.index.strftime(date_format).tolist()
             return {'dates': dates, 'values': values}
 
-    def remove_asset(
-            self,
-            asset='USD',
-            amount=0,
-            datetime=util.current_date_string()
-        ):
+    def remove_asset(self, asset='USD', amount=0, timestamp=datetime.now()):
         """
         Removes the given amount of an asset to this portfolio.
 
         :param asset: the asset to add to the portfolio
         :param amount: the amount of the asset to add
-        :param datetime: datetime string indicating the time the asset was added
+        :param timestamp: datetime obj indicating the time the asset was added
         """
         if amount < 0:
             raise ValueError('Asset amount must be greater than zero. '
                              'Given amount: {}'.format(amount))
-        if self.get_value(datetime, asset) < amount:
+        if self.get_value(timestamp, asset) < amount:
             raise ValueError('Removal of {0} requested but only {1} exists in '
                              'portfolio.'.format(amount, self.assets[asset]))
         self.assets[asset] -= amount
         self.history.append({
-            'datetime': datetime,
+            'timestamp': timestamp,
             'asset': asset,
             'amount': -amount
         })
 
     def trade_asset(
-            self,
-            amount,
-            from_asset,
-            to_asset,
-            datetime=util.current_date_string()
-        ):
+        self,
+        amount,
+        from_asset,
+        to_asset,
+        timestamp=datetime.now()
+    ):
         """
         Exchanges one asset for another. If it's a backdated trade, the
         historical exchange rate is used.
@@ -181,13 +181,12 @@ class Portfolio(object):
         :param amount: the amount of the asset to trade
         :param from_asset: the asset you are selling
         :param to_asset: the asset you are buying
-        :param datetime: datetime string indicating the time the asset was
-                         traded
+        :param timestamp: datetime obj indicating the time the asset was traded
         """
 
         if to_asset == 'USD':
-            price = 1/get_price(from_asset, datetime)
+            price = 1/self.manager.get_price(from_asset, timestamp.date())
         else:
-            price = get_price(to_asset, datetime)
-        self.remove_asset(from_asset, amount, datetime)
-        self.add_asset(to_asset, amount * 1/price, datetime)
+            price = self.manager.get_price(to_asset, timestamp.date())
+        self.remove_asset(from_asset, amount, timestamp)
+        self.add_asset(to_asset, amount * 1/price, timestamp)
