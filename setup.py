@@ -7,7 +7,7 @@ setup(
         'lattice': ['datasets/*.csv'],
     },
     include_package_data=True,
-    version = '0.4.9',
+    version = '0.5',
     description = 'A cryptocurrency market data utility package',
     author = 'Matthew Rosendin, Farshad Miraftab',
     author_email = 'matthew@polyledger.com, farshad@polyledger.com',
