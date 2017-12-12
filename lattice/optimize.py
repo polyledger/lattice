@@ -136,30 +136,25 @@ class Allocator(object):
             constraints=constraints, method='SLSQP', options={'disp': False}
         )
 
-    def allocate(self, dataset=None):
+    def allocate(self, dataframe=None):
         """
         Returns an efficient portfolio allocation for the given risk index.
         """
-
-        if dataset is None:
-            # For testing purposes, use the dataset
+        if dataframe is None:
+            # For testing purposes, use the dataframe
             dataframe = self.retrieve_data()
             dataframe = dataframe[self.SUPPORTED_COINS]
-        else:
-            dataset.set_index('date', inplace=True, drop=True)
-            dataset.index = pd.to_datetime(dataset.index)
-            dataset.replace(0, np.nan, inplace=True)
-            dataframe = dataset.loc[self.end:self.start,:]
 
         #==== Calculate the daily changes ====#
         change_columns = []
         for column in dataframe:
             if column in self.SUPPORTED_COINS:
                 change_column = '{}_change'.format(column)
-                dataframe[change_column] = (
+                values = pd.Series(
                     (dataframe[column].shift(-1) - dataframe[column]) /
                     -dataframe[column].shift(-1)
-                )
+                ).values
+                dataframe[change_column] = values
                 change_columns.append(change_column)
 
         # print(dataframe.head())
