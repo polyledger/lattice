@@ -126,6 +126,20 @@ This project uses [virtualenv](http://pypi.python.org/pypi/virtualenv) to isolat
 
 Lattice comes with a Makefile which enables some useful commands. From the project root, run `make help` for a list of commands.
 
+**Testing**
+
+To run the full test suite, use `make test`. To get a code coverage report, ensure [coverage](https://coverage.readthedocs.io/en/coverage-4.4.2/) is installed and run
+
+```
+$ coverage run --source lattice setup.py test
+```
+
+To get the report,
+
+```
+$ coverage report -m
+```
+
 ### Packaging and Distributing
 
 #### GitHub Release
