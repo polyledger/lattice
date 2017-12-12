@@ -12,28 +12,71 @@ $ python -m unittest tests.test_data
 You can run a specific test like so:
 
 ```
-$ python -m unittest tests.test_data.TestGetHistoricData
+$ python -m unittest tests.test_data.TestManager
 ```
 """
 
 import os
 import unittest
-from lattice.data import get_historic_data, get_price
+import pandas as pd
+from datetime import date
+from lattice.data import Manager
 from lattice import util
 
-class TestGetHistoricData(unittest.TestCase):
-    """Test the data module."""
+class TestManager(unittest.TestCase):
+    """Test the Manager class."""
+
+    def test_constructor(self):
+        """The constructor initializes a Manager class instance"""
+        manager = Manager()
+        self.assertIsInstance(manager, Manager)
 
     def test_get_historic_data(self):
-        get_historic_data(start='2015-01-01', end=util.current_date_string())
+        """Historic data is retrieved"""
+        # Test case where existing CSV is read
+        manager = Manager()
+        historic_data = manager.get_historic_data()
+        self.assertIsInstance(historic_data, pd.DataFrame)
+
+        # Test case where a DataFrame is passed
+        df = pd.DataFrame()
+        manager = Manager(df=df)
+        historic_data = manager.get_historic_data()
+        self.assertIsInstance(historic_data, pd.DataFrame)
+
+    def test_get_historic_data_raises(self):
+        """Historic data should raise when invalid end date is passed"""
+        manager = Manager()
+        start = date(2015, 1, 1)
+        end = date(2020, 1, 1)
 
         with self.assertRaises(ValueError):
-            get_historic_data(start='2015-01-01', end='2018-01-01')
+            manager.get_historic_data(start=start, end=end)
 
     def test_get_price(self):
-        price = get_price('BTC', '2017-10-01')
+        """Prices are retrieved"""
+        # Test case where existing CSV is read
+        manager = Manager()
+        price = manager.get_price('BTC', date(2017, 10, 1))
         self.assertEqual(price, 4403.09)
-        price = get_price('ETH', '2017-10-01')
+        price = manager.get_price('ETH', date(2017, 10, 1))
+        self.assertEqual(price, 303.95)
+
+        # Test case where a DataFrame is passed
+        filepath = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), '..',
+            'lattice/datasets/day_historical.csv'
+        )
+        df = pd.read_csv(
+            filepath_or_buffer=filepath,
+            index_col=0,
+            parse_dates=[0],
+            infer_datetime_format=True
+        )
+        manager = Manager(df=df)
+        price = manager.get_price('BTC', date(2017, 10, 1))
+        self.assertEqual(price, 4403.09)
+        price = manager.get_price('ETH', date(2017, 10, 1))
         self.assertEqual(price, 303.95)
 
 if __name__ == '__main__':
