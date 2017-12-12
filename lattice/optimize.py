@@ -9,8 +9,6 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 from scipy.optimize import minimize
-
-from lattice import util
 from lattice.data import Manager
 
 

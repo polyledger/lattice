@@ -21,7 +21,6 @@ import unittest
 import pandas as pd
 from datetime import date
 from lattice.data import Manager
-from lattice import util
 
 class TestManager(unittest.TestCase):
     """Test the Manager class."""

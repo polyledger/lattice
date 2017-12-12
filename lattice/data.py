@@ -11,7 +11,6 @@ from datetime import datetime, date
 import pandas as pd
 import numpy as np
 from pandas.io.common import EmptyDataError
-from lattice import util
 
 
 DEFAULT_COINS = [

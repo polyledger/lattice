@@ -11,8 +11,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
+import dateutil
 from datetime import datetime
-from lattice import util
 from lattice.data import Manager
 
 class Portfolio(object):
@@ -52,7 +52,7 @@ class Portfolio(object):
         else:
             self.assets[asset] += amount
         self.history.append({
-            'timestamp': timestamp,
+            'timestamp': str(timestamp),
             'asset': asset,
             'amount': +amount
         })
@@ -71,7 +71,7 @@ class Portfolio(object):
         # Backdate the portfolio by changing its values temporarily
         backdated_assets = self.assets.copy()
         for trade in list(reversed(self.history)):
-            if trade['timestamp'] > timestamp:
+            if dateutil.parser.parse(trade['timestamp']) > timestamp:
                 backdated_assets[trade['asset']] -= trade['amount']
 
                 if backdated_assets[trade['asset']] == 0:
@@ -80,7 +80,7 @@ class Portfolio(object):
         if asset:
             if asset != 'USD':
                 amount = backdated_assets[asset]
-                price = self.manager.get_price(asset, timestamp)
+                price = self.manager.get_price(asset, timestamp.date())
                 value = price * amount
             else:
                 if asset not in backdated_assets:
@@ -91,7 +91,10 @@ class Portfolio(object):
             for backdated_asset in backdated_assets:
                 amount = backdated_assets[backdated_asset]
                 if backdated_asset != 'USD':
-                    price = self.manager.get_price(backdated_asset, timestamp)
+                    price = self.manager.get_price(
+                        backdated_asset,
+                        timestamp.date()
+                    )
                     value += price * amount
                 else:
                     value += amount
@@ -162,7 +165,7 @@ class Portfolio(object):
                              'portfolio.'.format(amount, self.assets[asset]))
         self.assets[asset] -= amount
         self.history.append({
-            'timestamp': timestamp,
+            'timestamp': str(timestamp),
             'asset': asset,
             'amount': -amount
         })
