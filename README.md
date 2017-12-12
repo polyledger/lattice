@@ -9,7 +9,7 @@
 Install with pip:
 
 ```
-$ sudo pip install git+https://USERNAME@github.com/polyledger/lattice.git@VERSION
+$ sudo pip3 install git+https://USERNAME@github.com/polyledger/lattice.git@VERSION
 ```
 
 **NOTE**: You must have your SSH access to the Polyledger organization for this method. Replace `USERNAME` with your GitHub username and `VERSION` with the version tag to install, e.g. `0.4.9`.
@@ -89,14 +89,17 @@ allocations.loc[risk_index]
 **Saving data to a CSV**
 
 ``` python
-from lattice.data import get_historic_data
+from datetime import date
+from lattice.data import Manager
 
-start = '2017-01-01'
-end = '2017-06-01'
-path = '/Users/ari/Desktop/prices.csv'
+start = date(year=2017, month=1, day=1)
+end = date(year=2017, month=6, day=1)
+coins = ['BTC', 'LTC', 'ETH']
+filepath = '/Users/ari/Desktop/prices.csv'
 
-df = get_historic_data(start, end)
-df.to_csv(path)
+manager = Manager(coins)
+df = manager.get_historic_data(start, end)
+df.to_csv(filepath)
 ```
 
 ## Development
