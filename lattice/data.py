@@ -71,6 +71,9 @@ class Manager(object):
         return df_new
 
     def get_price(self, coin, date):
-        df = self.get_historic_data()
-        price = df.loc[date, coin]
-        return price
+        try:
+            df = self.get_historic_data()
+            price = df.loc[date, coin]
+            return price
+        except Exception as e:
+            raise(e)

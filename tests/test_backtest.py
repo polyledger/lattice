@@ -34,6 +34,10 @@ class TestPortfolio(unittest.TestCase):
         self.assertIsNot(portfolio, None)
         self.assertEqual(portfolio.assets['USD'], 10000)
 
+        """Can't instantiate with asset that doesn't exist yet"""
+        with self.assertRaises(ValueError):
+            portfolio = Portfolio({'BCH': 5}, created_at=datetime(2016, 1, 1))
+
     def test_add_asset(self):
         """Assets are added"""
         portfolio = Portfolio()
@@ -46,6 +50,12 @@ class TestPortfolio(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             portfolio.add_asset('USD', -10000)
+
+        """Can't add asset that doesn't exist yet"""
+        portfolio = Portfolio()
+
+        with self.assertRaises(ValueError):
+            portfolio.add_asset('BCH', 5, datetime(2016, 1, 1))
 
     def test_get_value(self):
         """Value of a portfolio is correct"""
@@ -95,8 +105,18 @@ class TestPortfolio(unittest.TestCase):
         self.assertEqual(portfolio.history[0]['asset'], 'USD')
         self.assertIsNot(portfolio.history[0]['amount'], -100)
 
+        """Can't remove a negative amount of an asset"""
         with self.assertRaises(ValueError):
             portfolio.remove_asset('USD', -1000)
+
+        """Can't remove an asset before it was added"""
+        portfolio = Portfolio({'BTC': 1}, created_at=datetime(2017, 1, 1))
+        with self.assertRaises(ValueError):
+            portfolio.remove_asset(
+                asset='BTC',
+                amount=1,
+                timestamp=datetime(2016, 1, 1)
+            )
 
     def test_trade_asset(self):
         """Assets are traded"""
@@ -105,6 +125,11 @@ class TestPortfolio(unittest.TestCase):
         self.assertEqual(portfolio.assets['USD'], 9000)
         self.assertTrue(portfolio.assets['BTC'] > 0)
         self.assertEqual(len(portfolio.history), 3)
+
+        """Can't trade an asset before it existed"""
+        portfolio = Portfolio({'USD': 10000})
+        with self.assertRaises(ValueError):
+            portfolio.trade_asset(1000, 'USD', 'BCH', datetime(2017, 1, 1))
 
     def test_get_historical_value(self):
         """Historical value data of portfolio is retrieved"""
@@ -134,6 +159,7 @@ class TestPortfolio(unittest.TestCase):
         )
 
     def test_backtest(self):
+        """Portfolios are properly backtested"""
         start = datetime(2017, 1, 1)
         end = datetime(2017, 11, 13)
 
@@ -151,7 +177,7 @@ class TestPortfolio(unittest.TestCase):
             freq='D'
         )
 
-        coins = ['BTC', 'ETH', 'LTC', 'ZEC', 'BCH', 'NEO', 'XMR', 'ETC', 'DASH']
+        coins = ['BTC', 'ETH', 'LTC', 'ZEC', 'XMR', 'ETC', 'DASH']
         allocations = Allocator(coins=coins).allocate()
 
         for index, allocation in allocations.iterrows():
@@ -159,6 +185,16 @@ class TestPortfolio(unittest.TestCase):
             for coin in coins:
                 portfolio.trade_asset(allocation[coin], 'USD', coin, start)
         data = portfolio.get_historical_value(start, end, 'D')
+
+        """Coins not in existence are prorated among existing coins"""
+        coins = ['BTC', 'ETH', 'LTC', 'ZEC', 'XMR', 'ETC', 'DASH', 'BCH', 'NEO']
+        allocations = Allocator(coins=coins).allocate()
+
+        # for index, allocation in allocations.iterrows():
+        #     portfolio = Portfolio({'USD': 100}, start)
+        #     for coin in coins:
+        #         portfolio.trade_asset(allocation[coin], 'USD', coin, start)
+        # data = portfolio.get_historical_value(start, end, 'D')
 
 if __name__ == '__main__':
     unittest.main()
