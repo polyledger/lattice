@@ -189,12 +189,13 @@ class TestPortfolio(unittest.TestCase):
         """Coins not in existence are prorated among existing coins"""
         coins = ['BTC', 'ETH', 'LTC', 'ZEC', 'XMR', 'ETC', 'DASH', 'BCH', 'NEO']
         allocations = Allocator(coins=coins).allocate()
+        print(allocations)
 
-        # for index, allocation in allocations.iterrows():
-        #     portfolio = Portfolio({'USD': 100}, start)
-        #     for coin in coins:
-        #         portfolio.trade_asset(allocation[coin], 'USD', coin, start)
-        # data = portfolio.get_historical_value(start, end, 'D')
+        for index, allocation in allocations.iterrows():
+            portfolio = Portfolio({'USD': 100}, start, proration=True)
+            for coin in coins:
+                portfolio.trade_asset(allocation[coin], 'USD', coin, start)
+        data = portfolio.get_historical_value(start, end, 'D')
 
 if __name__ == '__main__':
     unittest.main()
