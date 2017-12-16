@@ -7,6 +7,7 @@ usage.
 
 from __future__ import print_function
 
+import math
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -78,14 +79,14 @@ class Portfolio(object):
                     del backdated_assets[trade['asset']]
 
         if asset:
+            if asset not in backdated_assets:
+                raise ValueError('This portfolio does not contain {0}'
+                                 .format(asset))
             if asset != 'USD':
                 amount = backdated_assets[asset]
                 price = self.manager.get_price(asset, timestamp.date())
                 value = price * amount
             else:
-                if asset not in backdated_assets:
-                    raise ValueError('This portfolio does not contain {0}'
-                                     .format(asset))
                 return backdated_assets['USD']
         else:
             for backdated_asset in backdated_assets:

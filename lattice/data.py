@@ -5,7 +5,6 @@ This module is an interface for accessing cryptocurrency market data.
 """
 
 import os
-import math
 import requests
 from datetime import datetime, date
 import pandas as pd
@@ -73,4 +72,8 @@ class Manager(object):
     def get_price(self, coin, date):
         df = self.get_historic_data()
         price = df.loc[date, coin]
+
+        if np.isnan(price):
+            row = df.loc[:, coin].last_valid_index()
+            price = df.loc[row, coin]
         return price
