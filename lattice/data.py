@@ -74,6 +74,6 @@ class Manager(object):
         price = df.loc[date, coin]
 
         if np.isnan(price):
-            row = df.loc[:, coin].last_valid_index()
-            price = df.loc[row, coin]
+            last_valid_date = df.loc[:, coin].last_valid_index()
+            price = df.loc[last_valid_date, coin]
         return price
