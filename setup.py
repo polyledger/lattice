@@ -20,7 +20,8 @@ setup(
         'matplotlib',
         'pandas',
         'scipy',
-        'numpy'
+        'numpy',
+        'web3'
     ],
     classifiers = [],
 )
