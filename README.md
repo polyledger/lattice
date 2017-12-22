@@ -163,3 +163,13 @@ Ensure `wheel` and `twine` are installed. Then inside the directory,
 3. `twine upload dist/*`
 
 See the [Python documentation](https://packaging.python.org/tutorials/distributing-packages/) for more info.
+
+### Generating Documentation
+
+Lattice uses [Sphinx](http://www.sphinx-doc.org/en/stable/) to generate documentation output to `./docs`.
+
+Command to build documentation:
+
+```
+$ cd docs && make html
+```
