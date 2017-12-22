@@ -34,10 +34,6 @@ class TestPortfolio(unittest.TestCase):
         self.assertIsNot(portfolio, None)
         self.assertEqual(portfolio.assets['USD'], 10000)
 
-        """Can't instantiate with asset that doesn't exist yet"""
-        with self.assertRaises(ValueError):
-            portfolio = Portfolio({'BCH': 5}, created_at=datetime(2016, 1, 1))
-
     def test_add_asset(self):
         """Assets are added"""
         portfolio = Portfolio()
@@ -50,12 +46,6 @@ class TestPortfolio(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             portfolio.add_asset('USD', -10000)
-
-        """Can't add asset that doesn't exist yet"""
-        portfolio = Portfolio()
-
-        with self.assertRaises(ValueError):
-            portfolio.add_asset('BCH', 5, datetime(2016, 1, 1))
 
     def test_get_value(self):
         """Value of a portfolio is correct"""
