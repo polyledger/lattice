@@ -27,8 +27,12 @@ class Manager(object):
         self.coins = coins
         self.df = df
 
-    def get_historic_data(self, start=date(2010, 1, 1), end=date.today()):
-        if end > date.today():
+    def get_historic_data(
+        self,
+        start=date(2010, 1, 1),
+        end=datetime.utcnow().date()
+    ):
+        if end > datetime.utcnow().date():
             raise ValueError('Value for \'end\' argument is invalid.')
         if self.df is None:
             self.df = pd.read_csv(

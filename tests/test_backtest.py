@@ -17,7 +17,7 @@ $ python -m unittest tests.test_backtest.TestPortfolio.test_add_asset
 """
 
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from lattice.backtest import Portfolio
 from lattice.optimize import Allocator
 
@@ -146,6 +146,12 @@ class TestPortfolio(unittest.TestCase):
         self.assertEqual(
             len(historical_value['dates']),
             len(historical_value['values'])
+        )
+        # TODO: Use hourly data here and test
+        historical_value = portfolio.get_historical_value(
+            start=(datetime.utcnow() - timedelta(days=1)).date(),
+            end=datetime.utcnow(),
+            freq='H'
         )
 
     def test_backtest(self):

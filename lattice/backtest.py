@@ -24,7 +24,7 @@ class Portfolio(object):
     def __init__(
         self,
         assets=None,
-        created_at=datetime.now(),
+        created_at=datetime.utcnow(),
         manager=Manager()
     ):
         self.created_at = created_at
@@ -37,7 +37,7 @@ class Portfolio(object):
         else:
             self.assets = {'USD': 0}
 
-    def add_asset(self, asset='USD', amount=0, timestamp=datetime.now()):
+    def add_asset(self, asset='USD', amount=0, timestamp=datetime.utcnow()):
         """
         Adds the given amount of an asset to this portfolio.
 
@@ -58,7 +58,7 @@ class Portfolio(object):
             'amount': +amount
         })
 
-    def get_value(self, timestamp=datetime.now(), asset=None):
+    def get_value(self, timestamp=datetime.utcnow(), asset=None):
         """
         Get the value of the portfolio at a given time.
 
@@ -104,7 +104,7 @@ class Portfolio(object):
     def get_historical_value(
             self,
             start,
-            end=datetime.now(),
+            end=datetime.utcnow(),
             freq='D',
             date_format='%m-%d-%Y',
             chart=False,
@@ -150,7 +150,7 @@ class Portfolio(object):
             dates = time_series.index.strftime(date_format).tolist()
             return {'dates': dates, 'values': values}
 
-    def remove_asset(self, asset='USD', amount=0, timestamp=datetime.now()):
+    def remove_asset(self, asset='USD', amount=0, timestamp=datetime.utcnow()):
         """
         Removes the given amount of an asset to this portfolio.
 
@@ -176,7 +176,7 @@ class Portfolio(object):
         amount,
         from_asset,
         to_asset,
-        timestamp=datetime.now()
+        timestamp=datetime.utcnow()
     ):
         """
         Exchanges one asset for another. If it's a backdated trade, the
