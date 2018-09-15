@@ -2,23 +2,21 @@
 
 > A cryptocurrency portfolio analytics Python package
 
-[![Maintainability](https://api.codeclimate.com/v1/badges/ab47790d1135959e03eb/maintainability)](https://codeclimate.com/repos/59efa550adedb802cc000014/maintainability)
+![PyPI](https://img.shields.io/pypi/v/nine.svg) [![Maintainability](https://api.codeclimate.com/v1/badges/ab47790d1135959e03eb/maintainability)](https://codeclimate.com/repos/59efa550adedb802cc000014/maintainability)
 
 ## Installation
 
 Install with pip:
 
 ```
-$ sudo pip3 install git+https://USERNAME@github.com/polyledger/lattice.git@VERSION
+$ pip install lattice
 ```
-
-**NOTE**: You must have your SSH access to the Polyledger organization for this method. Replace `USERNAME` with your GitHub username and `VERSION` with the version tag to install, e.g. `0.5.1`.
 
 ## Usage
 
 **Backtesting trading strategies**
 
-``` python
+```python
 from datetime import datetime
 from lattice.backtest import Portfolio
 
@@ -95,7 +93,7 @@ allocations.loc[risk_index]
 
 **Saving data to a CSV**
 
-``` python
+```python
 from datetime import date
 from lattice.data import Manager
 
@@ -117,10 +115,10 @@ df.to_csv(filepath)
 
 This project uses [virtualenv](http://pypi.python.org/pypi/virtualenv) to isolate the development environment from the rest of the local filesystem. You must create the virtual environment, activate it, and deactivate it when you finish working.
 
-- Create the virtual environment with `python3 -m venv venv`.
-- Activate the virtual environment from within the project directory with `$ source venv/bin/activate`.
-- Now you can install the project dependencies with `(venv) $ pip3 install -r requirements.txt`.
-- When you are done working in the virtual environment, you can deactivate it: `(env) $ deactivate`. See the [python guide](http://docs.python-guide.org/en/latest/dev/virtualenvs/) for more information.
+* Create the virtual environment with `python3 -m venv venv`.
+* Activate the virtual environment from within the project directory with `$ source venv/bin/activate`.
+* Now you can install the project dependencies with `(venv) $ pip3 install -r requirements.txt`.
+* When you are done working in the virtual environment, you can deactivate it: `(env) $ deactivate`. See the [python guide](http://docs.python-guide.org/en/latest/dev/virtualenvs/) for more information.
 
 **Makefile**
 
@@ -159,8 +157,8 @@ Ensure `wheel` and `twine` are installed. Then inside the directory,
 
 1. `make clean-build`
 1. `python setup.py sdist`
-2. `python setup.py bdist_wheel`
-3. `twine upload dist/*`
+1. `python setup.py bdist_wheel`
+1. `twine upload dist/*`
 
 See the [Python documentation](https://packaging.python.org/tutorials/distributing-packages/) for more info.
 
