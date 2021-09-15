@@ -1,5 +1,7 @@
 # Lattice
 
+This repository has been archived.
+
 > A cryptocurrency portfolio analytics Python package
 
 ![PyPI](https://img.shields.io/pypi/v/nine.svg) [![Maintainability](https://api.codeclimate.com/v1/badges/ab47790d1135959e03eb/maintainability)](https://codeclimate.com/repos/59efa550adedb802cc000014/maintainability)
